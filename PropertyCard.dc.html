@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/organic-da957c01-6e51-46d7-b9d5-5aebaf52fbd9/styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="./aquaterra-theme.css">
+  <script src="_ds/organic-da957c01-6e51-46d7-b9d5-5aebaf52fbd9/_ds_bundle.js"></script>
+  <script src="./image-slot.js"></script>
+</helmet>
+<article style="display:flex;flex-direction:column;height:100%;background:var(--color-surface);border-radius:10px;padding:10px;color:var(--color-text);font-family:var(--font-body);transition:box-shadow .25s ease,transform .25s ease" style-hover="box-shadow:var(--shadow-lg);transform:translateY(-3px)">
+  <div style="position:relative">
+    <div style="position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--color-neutral-200)">
+      <image-slot id="{{ p.slotId }}" shape="rect" src="{{ p.img }}" credit="{{ p.credit }}" credit-href="{{ p.creditHref }}" placeholder="Foto del inmueble pendiente"></image-slot>
+    </div>
+    <div style="position:absolute;top:12px;left:12px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none">
+      <span class="tag tag-neutral" style="font-size:12px;font-weight:600">{{ p.type }}</span>
+      <span class="tag {{ p.statusClass }}" style="font-size:12px;font-weight:600">{{ p.status }}</span>
+    </div>
+    <button type="button" data-slug="{{ p.slug }}" onClick="{{ onCmp }}" aria-pressed="{{ p.cmpOn }}" aria-label="Comparar: {{ p.title }}" style="position:absolute;top:10px;right:10px;min-height:36px;padding:0 14px;border:0;border-radius:999px;background:{{ p.cmpBg }};color:#14110b;font:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)">{{ p.cmpLabel }}</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px;padding:16px 12px 8px;flex:1">
+    <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--color-neutral-700)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>{{ p.zoneName }}, Paraguay</span>
+    <h3 style="font-size:20px;line-height:1.2;margin:0;text-wrap:balance"><a href="#/propiedad/{{ p.slug }}" style="color:var(--color-text);text-decoration:none" style-hover="color:var(--color-accent-700)">{{ p.title }}</a></h3>
+    <p style="margin:0;font-size:14px;line-height:1.5;color:var(--color-neutral-700)">{{ p.metaLine }}</p>
+    <div style="margin-top:auto;padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--font-heading);font-size:21px">{{ p.priceLabel }}</span><sc-if value="{{ showDemo }}" hint-placeholder-val="{{ true }}"><span class="tag tag-accent" style="font-size:11px;font-weight:700">DEMO</span></sc-if></span>
+      <a href="#/propiedad/{{ p.slug }}" class="btn btn-secondary" aria-label="Ver ficha: {{ p.title }}" style="min-height:40px;padding:0 16px;font-size:14px">Ver ficha</a>
+    </div>
+  </div>
+</article>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:340,&quot;height&quot;:470},&quot;p&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;,&quot;default&quot;:{&quot;slug&quot;:&quot;casa-con-jardin-en-luque&quot;,&quot;title&quot;:&quot;Casa con jardín en Luque&quot;,&quot;type&quot;:&quot;Casa&quot;,&quot;status&quot;:&quot;Disponible&quot;,&quot;statusClass&quot;:&quot;tag-accent-2&quot;,&quot;zoneName&quot;:&quot;Luque&quot;,&quot;metaLine&quot;:&quot;3 dorm. · 2 baños · 210 m² · lote 450 m²&quot;,&quot;priceLabel&quot;:&quot;USD 145.000&quot;,&quot;slotId&quot;:&quot;prop-AQ-002-1&quot;}},&quot;showDemo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}"></script>
+</body>
+</html>

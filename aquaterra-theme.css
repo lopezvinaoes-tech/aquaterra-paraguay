@@ -1,0 +1,286 @@
+/* Aquaterra — paleta corporativa (dorado + negro cálido + marfil). Sobrescribe los tokens del sistema Organic. */
+html:root {
+  --color-bg: #faf7f0;
+  --color-surface: #f2ebdc;
+  --color-text: #14110b;
+  --color-accent: #c99a2e;
+  --color-accent-2: #4a4032;
+  --color-divider: color-mix(in srgb, #14110b 14%, transparent);
+
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #f5f0e6;
+  --color-neutral-300: #e6ddcb;
+  --color-neutral-400: #c8bca4;
+  --color-neutral-500: #a0937a;
+  --color-neutral-600: #7b705b;
+  --color-neutral-700: #574e3f;
+  --color-neutral-800: #3a3329;
+  --color-neutral-900: #16130e;
+
+  --color-accent-100: #fbf5e4;
+  --color-accent-200: #f4e5bb;
+  --color-accent-300: #e9cf86;
+  --color-accent-400: #dcb655;
+  --color-accent-500: #c99a2e;
+  --color-accent-600: #b0841f;
+  --color-accent-700: #7f5d12;
+  --color-accent-800: #5c430d;
+  --color-accent-900: #3a2a08;
+
+  --color-accent-2-100: #f3efe7;
+  --color-accent-2-200: #e2dacb;
+  --color-accent-2-300: #c9bca5;
+  --color-accent-2-400: #a5957a;
+  --color-accent-2-500: #7b6d56;
+  --color-accent-2-600: #5d523f;
+  --color-accent-2-700: #453c2e;
+  --color-accent-2-800: #2c261d;
+  --color-accent-2-900: #17140f;
+
+  --font-heading: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-heading-weight: 700;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --color-gold: #f7c548;
+  --color-gold-light: #ffe7a3;
+  --color-gold-deep: #a8740f;
+  --glow-gold: 0 0 4px #ffe7a3, 0 0 10px #f7c548, 0 0 22px #f7c548, 0 0 44px color-mix(in srgb, #f7c548 55%, transparent);
+
+  --rope-groove: color-mix(in oklab, var(--color-gold-deep) 40%, black);
+  --rope-tex-v: repeating-linear-gradient(-62deg, var(--rope-groove) 0 2px, var(--color-gold-deep) 2px 5px, var(--color-gold) 5px 8px, var(--color-gold-light) 8px 9px, var(--color-gold-deep) 9px 12px, var(--rope-groove) 12px 14px);
+  --rope-fiber-v: repeating-linear-gradient(-62deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+  --rope-shade-v: linear-gradient(90deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.18) 22%, rgba(255,244,214,.42) 40%, rgba(0,0,0,0) 58%, rgba(0,0,0,.75) 100%);
+  --rope-tex-h: repeating-linear-gradient(28deg, var(--rope-groove) 0 2px, var(--color-gold-deep) 2px 5px, var(--color-gold) 5px 8px, var(--color-gold-light) 8px 9px, var(--color-gold-deep) 9px 12px, var(--rope-groove) 12px 14px);
+  --rope-shade-h: linear-gradient(180deg, rgba(255,244,214,.35) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,.7) 100%);
+  --brass: linear-gradient(180deg, var(--color-gold-light) 0%, var(--color-gold) 28%, var(--color-gold-deep) 62%, var(--rope-groove) 100%);
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #16130e 12%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #16130e 12%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #16130e 16%, transparent);
+}
+
+/* Tono «gris»: blanco + grises claros con detalles dorados (logo, acentos --color-gold-*). Se activa con html[data-aq-tone="gris"]. */
+html[data-aq-tone="gris"]:root {
+  --color-bg: #fbfbfc;
+  --color-surface: #f1f2f4;
+  --color-text: #151618;
+  --color-accent: #c4c8ce;
+  --color-accent-2: #4a4f57;
+  --color-divider: color-mix(in srgb, #151618 12%, transparent);
+
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #f3f4f6;
+  --color-neutral-300: #e3e5e8;
+  --color-neutral-400: #c6c9ce;
+  --color-neutral-500: #9b9fa6;
+  --color-neutral-600: #74787f;
+  --color-neutral-700: #54575d;
+  --color-neutral-800: #36383c;
+  --color-neutral-900: #151618;
+
+  --color-accent-100: #f5f6f7;
+  --color-accent-200: #eaecee;
+  --color-accent-300: #dcdfe3;
+  --color-accent-400: #cfd3d8;
+  --color-accent-500: #c4c8ce;
+  --color-accent-600: #aeb3ba;
+  --color-accent-700: #565c64;
+  --color-accent-800: #3d4249;
+  --color-accent-900: #25282d;
+
+  --color-accent-2-100: #f2f3f5;
+  --color-accent-2-200: #e1e3e7;
+  --color-accent-2-300: #c8ccd2;
+  --color-accent-2-400: #a3a8b0;
+  --color-accent-2-500: #7b8089;
+  --color-accent-2-600: #5d626a;
+  --color-accent-2-700: #45494f;
+  --color-accent-2-800: #2c2f33;
+  --color-accent-2-900: #17181b;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #151618 10%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #151618 10%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #151618 14%, transparent);
+}
+html[data-aq-tone="gris"] [data-aq3d-layer] canvas { filter: grayscale(1); }
+
+html h1, html h2, html h3, html h4 { letter-spacing: -0.025em; }
+html .btn, html .tag, html .seg, html .input { border-radius: 6px; }
+html .card, html .dialog { border-radius: 10px; }
+html .btn { font-weight: 700; letter-spacing: -0.005em; }
+html .btn-primary { color: var(--color-text) !important; }
+
+/* Modo noche: html[data-aq-mode="dark"]. Rampas invertidas; los bloques siempre oscuros ([data-keep]) conservan los valores del modo día. */
+html[data-aq-mode="dark"] { color-scheme: dark; }
+html[data-aq-mode="dark"][data-aq-tone="gris"]:root {
+  --color-bg: #0f1012;
+  --color-surface: #1a1c1f;
+  --color-text: #eceef1;
+  --color-divider: color-mix(in srgb, #eceef1 14%, transparent);
+  --color-neutral-100: #151618;
+  --color-neutral-200: #36383c;
+  --color-neutral-300: #54575d;
+  --color-neutral-400: #74787f;
+  --color-neutral-500: #9b9fa6;
+  --color-neutral-600: #c6c9ce;
+  --color-neutral-700: #e3e5e8;
+  --color-neutral-800: #f3f4f6;
+  --color-neutral-900: #ffffff;
+  --color-accent-100: #25282d;
+  --color-accent-200: #3d4249;
+  --color-accent-300: #565c64;
+  --color-accent-400: #aeb3ba;
+  --color-accent-500: #c4c8ce;
+  --color-accent-600: #cfd3d8;
+  --color-accent-700: #dcdfe3;
+  --color-accent-800: #eaecee;
+  --color-accent-900: #f5f6f7;
+  --color-accent-2-100: #17181b;
+  --color-accent-2-200: #2c2f33;
+  --color-accent-2-300: #45494f;
+  --color-accent-2-400: #5d626a;
+  --color-accent-2-500: #7b8089;
+  --color-accent-2-600: #a3a8b0;
+  --color-accent-2-700: #c8ccd2;
+  --color-accent-2-800: #e1e3e7;
+  --color-accent-2-900: #f2f3f5;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
+  --shadow-md: 0 3px 10px rgba(0,0,0,.5);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.6);
+}
+html[data-aq-mode="dark"]:not([data-aq-tone="gris"]):root {
+  --color-bg: #100e0a;
+  --color-surface: #1c1912;
+  --color-text: #f5f0e6;
+  --color-divider: color-mix(in srgb, #f5f0e6 14%, transparent);
+  --color-neutral-100: #16130e;
+  --color-neutral-200: #3a3329;
+  --color-neutral-300: #574e3f;
+  --color-neutral-400: #7b705b;
+  --color-neutral-500: #a0937a;
+  --color-neutral-600: #c8bca4;
+  --color-neutral-700: #e6ddcb;
+  --color-neutral-800: #f5f0e6;
+  --color-neutral-900: #ffffff;
+  --color-accent-100: #3a2a08;
+  --color-accent-200: #5c430d;
+  --color-accent-300: #7f5d12;
+  --color-accent-400: #b0841f;
+  --color-accent-500: #c99a2e;
+  --color-accent-600: #dcb655;
+  --color-accent-700: #e9cf86;
+  --color-accent-800: #f4e5bb;
+  --color-accent-900: #fbf5e4;
+  --color-accent-2-100: #17140f;
+  --color-accent-2-200: #2c261d;
+  --color-accent-2-300: #453c2e;
+  --color-accent-2-400: #5d523f;
+  --color-accent-2-500: #7b6d56;
+  --color-accent-2-600: #a5957a;
+  --color-accent-2-700: #c9bca5;
+  --color-accent-2-800: #e2dacb;
+  --color-accent-2-900: #f3efe7;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
+  --shadow-md: 0 3px 10px rgba(0,0,0,.5);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.6);
+}
+html[data-aq-mode="dark"][data-aq-tone="gris"] [data-keep] {
+  --color-bg: #fbfbfc;
+  --color-surface: #f1f2f4;
+  --color-text: #151618;
+  --color-divider: color-mix(in srgb, #151618 12%, transparent);
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #f3f4f6;
+  --color-neutral-300: #e3e5e8;
+  --color-neutral-400: #c6c9ce;
+  --color-neutral-500: #9b9fa6;
+  --color-neutral-600: #74787f;
+  --color-neutral-700: #54575d;
+  --color-neutral-800: #36383c;
+  --color-neutral-900: #151618;
+  --color-accent-100: #f5f6f7;
+  --color-accent-200: #eaecee;
+  --color-accent-300: #dcdfe3;
+  --color-accent-400: #cfd3d8;
+  --color-accent-500: #c4c8ce;
+  --color-accent-600: #aeb3ba;
+  --color-accent-700: #565c64;
+  --color-accent-800: #3d4249;
+  --color-accent-900: #25282d;
+  --color-accent-2-100: #f2f3f5;
+  --color-accent-2-200: #e1e3e7;
+  --color-accent-2-300: #c8ccd2;
+  --color-accent-2-400: #a3a8b0;
+  --color-accent-2-500: #7b8089;
+  --color-accent-2-600: #5d626a;
+  --color-accent-2-700: #45494f;
+  --color-accent-2-800: #2c2f33;
+  --color-accent-2-900: #17181b;
+}
+html[data-aq-mode="dark"]:not([data-aq-tone="gris"]) [data-keep] {
+  --color-bg: #faf7f0;
+  --color-surface: #f2ebdc;
+  --color-text: #14110b;
+  --color-divider: color-mix(in srgb, #14110b 14%, transparent);
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #f5f0e6;
+  --color-neutral-300: #e6ddcb;
+  --color-neutral-400: #c8bca4;
+  --color-neutral-500: #a0937a;
+  --color-neutral-600: #7b705b;
+  --color-neutral-700: #574e3f;
+  --color-neutral-800: #3a3329;
+  --color-neutral-900: #16130e;
+  --color-accent-100: #fbf5e4;
+  --color-accent-200: #f4e5bb;
+  --color-accent-300: #e9cf86;
+  --color-accent-400: #dcb655;
+  --color-accent-500: #c99a2e;
+  --color-accent-600: #b0841f;
+  --color-accent-700: #7f5d12;
+  --color-accent-800: #5c430d;
+  --color-accent-900: #3a2a08;
+  --color-accent-2-100: #f3efe7;
+  --color-accent-2-200: #e2dacb;
+  --color-accent-2-300: #c9bca5;
+  --color-accent-2-400: #a5957a;
+  --color-accent-2-500: #7b6d56;
+  --color-accent-2-600: #5d523f;
+  --color-accent-2-700: #453c2e;
+  --color-accent-2-800: #2c261d;
+  --color-accent-2-900: #17140f;
+}
+html[data-aq-mode="dark"] .btn-primary { color: #14110b !important; }
+html[data-aq-mode="dark"] image-slot { filter: brightness(.92); }
+html, body { transition: background-color .3s ease, color .3s ease; }
+
+/* Mapa (Leaflet) */
+.aq-pin { background: none; border: 0; }
+.leaflet-container { font-family: var(--font-body); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--color-neutral-100); color: var(--color-text); }
+.leaflet-popup-content a { color: var(--color-gold-deep); }
+html[data-aq-mode="dark"] .leaflet-bar a { background: #1a1c1f; color: #eceef1; border-color: #2c2f33; }
+
+/* Móvil: cabecera compacta, sin cuerda lateral, gráficos y tablas a lo ancho */
+@media (max-width: 899px) {
+  [data-aq-nav] { height: 64px !important; gap: 8px !important; padding: 0 14px !important; }
+  [data-aq-nav] > a img { width: 36px !important; height: 36px !important; }
+  [data-aq-nav] > a { gap: 8px !important; min-width: 0; }
+  [data-aq-nav] > a > span > span:first-child { font-size: 19px !important; }
+  [data-aq-nav] .btn-icon { width: 42px !important; height: 42px !important; }
+  [data-spine-cv] { display: none !important; }
+  [data-spine-root] > header, [data-spine-root] > div { padding-left: 18px !important; padding-right: 18px !important; }
+  [data-chart-run] { height: auto !important; }
+  [data-chart-run] > div { position: static !important; }
+  [data-rv], [data-rvx], [data-ch] { opacity: 1 !important; transform: none !important; filter: none !important; }
+  [data-ch]::before, [data-ch]::after { display: none !important; }
+  [role="tablist"] button { flex: 1 1 140px !important; }
+  #cat-comparador table { min-width: 520px !important; font-size: 14px; }
+  #cat-comparador th:first-child, #cat-comparador td:first-child { position: sticky; left: 0; background: var(--color-surface); z-index: 1; }
+  h1 { overflow-wrap: anywhere; }
+}
+@media (max-width: 380px) {
+  [data-aq-nav] > a > span { display: none !important; }
+}

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Globo Madrid – Asunción</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9"
+  }
+}
+</script>
+<style>
+  html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:"Figtree",system-ui,sans-serif}
+  #wrap{position:relative;width:100%;height:100%;outline:none}
+  #wrap:focus-visible{outline:2px solid #f7c548;outline-offset:-2px;border-radius:50%}
+  canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:pan-y}
+  canvas:active{cursor:grabbing}
+  .lbl{position:absolute;left:0;top:0;padding:5px 12px;border-radius:999px;background:rgba(11,15,20,.78);color:#fff;font-size:13px;font-weight:700;white-space:nowrap;pointer-events:none;transition:opacity .25s;will-change:transform}
+  #msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:#dbe5f1;font-size:15px;line-height:1.5;pointer-events:none}
+  #credit{position:absolute;right:6px;bottom:2px;font-size:10px;color:rgba(219,229,241,.7);pointer-events:none}
+</style>
+</head>
+<body>
+<div id="wrap" tabindex="0" role="img" aria-label="Globo terráqueo con la ruta entre Madrid (España) y Asunción (Paraguay). Arrastra o usa las flechas del teclado para girarlo.">
+  <div id="msg">Cargando globo…</div>
+  <div class="lbl" id="l-mad" style="opacity:0">Madrid</div>
+  <div class="lbl" id="l-asu" style="opacity:0">Asunción</div>
+  <span id="credit">Imagen de la Tierra: NASA Blue Marble</span>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const wrap = document.getElementById('wrap'), msg = document.getElementById('msg');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const IMG = 'https://cdn.jsdelivr.net/npm/three-globe/example/img/';
+const MAD = [40.4168, -3.7038], ASU = [-25.2637, -57.5759];
+const fail = (t) => { msg.textContent = t; msg.style.display = 'grid'; };
+
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' }); }
+catch (e) { fail('Madrid → Asunción · Ruta ortodrómica entre España y Paraguay.'); throw e; }
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0);
+wrap.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+scene.add(camera);
+const sun = new THREE.DirectionalLight(0xffffff, 2.6); sun.name = 'sol'; sun.position.set(-1.6, 1.3, 2.6); camera.add(sun);
+scene.add(new THREE.AmbientLight(0x9fc2ff, 0.38));
+
+const R = 1;
+function vec(lat, lon, r = R) {
+  const phi = (lon + 180) * Math.PI / 180, th = (90 - lat) * Math.PI / 180;
+  return new THREE.Vector3(-Math.cos(phi) * Math.sin(th) * r, Math.cos(th) * r, Math.sin(phi) * Math.sin(th) * r);
+}
+
+const loader = new THREE.TextureLoader();
+const maxAniso = renderer.capabilities.getMaxAnisotropy();
+const tex = (f, srgb) => new Promise(res => loader.load(IMG + f, t => { if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; res(t); }, undefined, () => res(null)));
+
+const earthMat = new THREE.MeshPhongMaterial({ name: 'tierra', color: 0xffffff, specular: 0x3d5266, shininess: 16 });
+const earth = new THREE.Mesh(new THREE.SphereGeometry(R, 128, 96), earthMat); earth.name = 'tierra';
+scene.add(earth);
+
+const atmoV = 'varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }';
+const outer = new THREE.Mesh(new THREE.SphereGeometry(R * 1.16, 96, 64), new THREE.ShaderMaterial({
+  vertexShader: atmoV, side: THREE.BackSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
+  fragmentShader: 'varying vec3 vN; varying vec3 vV; void main(){ float s = clamp(-dot(vN, vV), 0.0, 1.0); float i = pow(clamp(s / 0.5, 0.0, 1.0), 2.6); gl_FragColor = vec4(vec3(0.42, 0.70, 1.0) * i * 0.95, i); }'
+})); outer.name = 'atmosfera';
+const inner = new THREE.Mesh(new THREE.SphereGeometry(R * 1.003, 96, 64), new THREE.ShaderMaterial({
+  vertexShader: atmoV, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false,
+  fragmentShader: 'varying vec3 vN; varying vec3 vV; void main(){ float f = 1.0 - clamp(dot(vN, vV), 0.0, 1.0); float i = pow(f, 3.5) * 0.85; gl_FragColor = vec4(vec3(0.55, 0.78, 1.0) * i, i); }'
+})); inner.name = 'halo';
+scene.add(outer, inner);
+
+// Ruta ortodrómica elevada
+const a = vec(...MAD).normalize(), b = vec(...ASU).normalize(), qa = new THREE.Quaternion(), qAB = new THREE.Quaternion().setFromUnitVectors(a, b);
+const pts = [];
+for (let i = 0; i <= 160; i++) {
+  const t = i / 160, q = qa.clone().slerp(qAB, t), p = a.clone().applyQuaternion(q);
+  pts.push(p.multiplyScalar(R * (1.004 + 0.17 * Math.sin(Math.PI * t))));
+}
+const curve = new THREE.CatmullRomCurve3(pts);
+const SEG = 240, RAD = 8;
+const tubeGeo = new THREE.TubeGeometry(curve, SEG, 0.0065, RAD, false);
+const route = new THREE.Mesh(tubeGeo, new THREE.MeshBasicMaterial({ name: 'ruta', color: 0xffe7a3, transparent: true, opacity: 0.95 })); route.name = 'ruta';
+const routeGlow = new THREE.Mesh(new THREE.TubeGeometry(curve, SEG, 0.016, RAD, false), new THREE.MeshBasicMaterial({ name: 'ruta-brillo', color: 0xf7c548, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }));
+scene.add(route, routeGlow);
+const fullIdx = tubeGeo.index.count;
+
+const plane = new THREE.Mesh(new THREE.SphereGeometry(0.016, 24, 16), new THREE.MeshBasicMaterial({ name: 'avion', color: 0xffffff })); plane.name = 'trayecto';
+const planeGlow = new THREE.Mesh(new THREE.SphereGeometry(0.04, 24, 16), new THREE.MeshBasicMaterial({ color: 0xf7c548, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
+plane.add(planeGlow); scene.add(plane);
+
+const rings = [];
+[MAD, ASU].forEach((c, i) => {
+  const p = vec(...c, R * 1.002), n = p.clone().normalize();
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.014, 20, 14), new THREE.MeshBasicMaterial({ color: 0xffffff })); dot.position.copy(p); dot.name = i ? 'asuncion' : 'madrid';
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.022, 0.03, 48), new THREE.MeshBasicMaterial({ color: 0xf7c548, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+  ring.position.copy(p.clone().add(n.clone().multiplyScalar(0.001))); ring.lookAt(p.clone().add(n));
+  scene.add(dot, ring); rings.push(ring);
+});
+const labels = [{ el: document.getElementById('l-mad'), p: vec(...MAD, R * 1.01) }, { el: document.getElementById('l-asu'), p: vec(...ASU, R * 1.01) }];
+
+// Cámara y controles
+const DIST = 3.9, baseDir = vec(6, -32).normalize();
+camera.position.copy(baseDir).multiplyScalar(DIST);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableZoom = false; controls.enablePan = false; controls.enableDamping = true; controls.dampingFactor = 0.08; controls.rotateSpeed = 0.55;
+controls.minPolarAngle = 0.35; controls.maxPolarAngle = Math.PI - 0.35;
+let lastUser = -1e9;
+controls.addEventListener('start', () => { lastUser = performance.now(); });
+controls.addEventListener('end', () => { lastUser = performance.now(); });
+wrap.addEventListener('keydown', e => {
+  const m = { ArrowLeft: [-0.16, 0], ArrowRight: [0.16, 0], ArrowUp: [0, -0.12], ArrowDown: [0, 0.12] }[e.key];
+  if (!m) return; e.preventDefault();
+  const s = new THREE.Spherical().setFromVector3(camera.position);
+  s.theta += m[0]; s.phi = Math.min(Math.PI - 0.35, Math.max(0.35, s.phi + m[1]));
+  camera.position.setFromSpherical(s); lastUser = performance.now();
+});
+
+function resize() {
+  const w = wrap.clientWidth || 300, h = wrap.clientHeight || 300;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(wrap); resize();
+
+let visible = true;
+if ('IntersectionObserver' in window) new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(wrap);
+
+const v3 = new THREE.Vector3(), camDir = new THREE.Vector3(), swayAxis = new THREE.Vector3(0, 1, 0);
+const t0 = performance.now(); let ready = false;
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (!visible || document.hidden || !ready) return;
+  const el = (now - t0) / 1000;
+  if (!reduce && now - lastUser > 4000) {
+    const target = baseDir.clone().applyAxisAngle(swayAxis, Math.sin(el / 7) * 0.32).multiplyScalar(DIST);
+    camera.position.lerp(target, 0.012);
+  }
+  controls.update();
+  const draw = reduce ? 1 : Math.min(1, el / 2.2), ease = 1 - Math.pow(1 - draw, 3);
+  const idx = Math.floor(ease * SEG) * RAD * 6;
+  tubeGeo.setDrawRange(0, Math.min(fullIdx, idx)); routeGlow.geometry.setDrawRange(0, Math.min(fullIdx, idx));
+  const k = reduce ? 0.5 : (draw < 1 ? ease : ((el - 2.2) / 5) % 1);
+  plane.position.copy(curve.getPointAt(Math.min(0.999, k)));
+  rings.forEach((r, i) => { const s = reduce ? 1 : 1 + 0.5 * ((el * 0.8 + i * 0.5) % 1); r.scale.setScalar(s); r.material.opacity = reduce ? 0.9 : 1 - ((el * 0.8 + i * 0.5) % 1); });
+  renderer.render(scene, camera);
+  camera.getWorldDirection(camDir);
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  labels.forEach(L => {
+    v3.copy(L.p); const facing = v3.clone().normalize().dot(camera.position.clone().normalize());
+    v3.project(camera);
+    L.el.style.opacity = facing > 0.2 ? '1' : '0';
+    L.el.style.transform = 'translate(' + ((v3.x * 0.5 + 0.5) * w).toFixed(1) + 'px,' + ((-v3.y * 0.5 + 0.5) * h).toFixed(1) + 'px) translate(-50%,-150%)';
+  });
+}
+
+Promise.all([tex('earth-blue-marble.jpg', true), tex('earth-topology.png'), tex('earth-water.png')]).then(([map, bump, water]) => {
+  if (map) earthMat.map = map; else earthMat.color.set(0x2a5d8f);
+  if (bump) { earthMat.bumpMap = bump; earthMat.bumpScale = 2.2; }
+  if (water) earthMat.specularMap = water;
+  earthMat.needsUpdate = true;
+  msg.style.display = 'none'; ready = true;
+  requestAnimationFrame(frame);
+});
+</script>
+</body>
+</html>

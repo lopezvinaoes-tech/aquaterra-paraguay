@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/organic-da957c01-6e51-46d7-b9d5-5aebaf52fbd9/styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="./aquaterra-theme.css">
+  <script src="_ds/organic-da957c01-6e51-46d7-b9d5-5aebaf52fbd9/_ds_bundle.js"></script>
+  <script src="./image-slot.js"></script>
+</helmet>
+<article style="display:flex;flex-direction:column;gap:10px;height:100%;font-family:var(--font-body);color:var(--color-text)">
+  <div style="position:relative;aspect-ratio:3/2;border-radius:10px;overflow:hidden;background:var(--color-neutral-200)"><image-slot id="{{ a.slotId }}" shape="rect" src="{{ a.img }}" credit="{{ a.credit }}" credit-href="{{ a.creditHref }}" placeholder="Imagen del artículo"></image-slot></div>
+  <span style="font-size:12px;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;color:var(--color-accent-700);margin-top:8px">{{ a.cat }}</span>
+  <h3 style="font-size:21px;line-height:1.2;margin:0;text-wrap:balance"><a href="#/blog/{{ a.slug }}" style="color:var(--color-text);text-decoration:none" style-hover="color:var(--color-accent-700)">{{ a.title }}</a></h3>
+  <p style="font-size:15px;line-height:1.6;margin:0;color:var(--color-neutral-800)">{{ a.excerpt }}</p>
+  <span style="font-size:13px;margin-top:auto;padding-top:4px;color:var(--color-neutral-700)">{{ a.dateLabel }} · {{ a.mins }} min de lectura</span>
+</article>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:360,&quot;height&quot;:440},&quot;a&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;,&quot;default&quot;:{&quot;slug&quot;:&quot;comprar-a-distancia-desde-espana&quot;,&quot;title&quot;:&quot;Comprar a distancia: visitas, poderes y comunicación&quot;,&quot;cat&quot;:&quot;Guías prácticas&quot;,&quot;excerpt&quot;:&quot;Si no puedes viajar en cada fase, estas son las piezas que conviene organizar con tiempo.&quot;,&quot;dateLabel&quot;:&quot;19 de agosto de 2026&quot;,&quot;mins&quot;:6,&quot;slotId&quot;:&quot;art-comprar-a-distancia-desde-espana&quot;}}}"></script>
+</body>
+</html>

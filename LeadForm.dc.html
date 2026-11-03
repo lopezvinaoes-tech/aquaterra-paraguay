@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/organic-da957c01-6e51-46d7-b9d5-5aebaf52fbd9/styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="./aquaterra-theme.css">
+  <script src="_ds/organic-da957c01-6e51-46d7-b9d5-5aebaf52fbd9/_ds_bundle.js"></script>
+</helmet>
+<div style="display:flex;flex-direction:column;gap:16px;font-family:var(--font-body);color:var(--color-text)">
+  <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="padding:26px;border-radius:10px;background:var(--color-accent-2-100);display:flex;flex-direction:column;gap:12px">
+      <span aria-hidden="true" style="width:48px;height:48px;border-radius:8px;background:var(--color-accent-2-600);display:grid;place-items:center;color:var(--color-neutral-100)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+      <h3 style="margin:0;font-size:22px">Solicitud registrada</h3>
+      <p style="margin:0;font-size:15px;line-height:1.6">{{ successText }}</p>
+      <p style="margin:0;font-size:13px;line-height:1.5;color:var(--color-accent-2-800)">Prototipo: la solicitud se guarda solo en este navegador y aparece en el panel de administración. En producción se enviará al servidor.</p>
+      <button type="button" class="btn btn-secondary" style="align-self:flex-start;min-height:44px;padding:0 20px;font-size:15px" onClick="{{ reset }}">Enviar otra solicitud</button>
+    </div>
+  </sc-if>
+  <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+    <form noValidate onSubmit="{{ onSubmit }}" style="position:relative;display:flex;flex-direction:column;gap:14px">
+      <sc-if value="{{ hasTitle }}" hint-placeholder-val="{{ true }}"><h3 style="margin:0;font-size:24px;line-height:1.15">{{ title }}</h3></sc-if>
+      <sc-if value="{{ hasIntro }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:15px;line-height:1.6;color:var(--color-neutral-800)">{{ intro }}</p></sc-if>
+      <div style="display:grid;grid-template-columns:{{ cols }};gap:14px">
+        <div class="field">
+          <label for="{{ ids.name }}" style="font-size:13px;font-weight:600;color:var(--color-neutral-800)">Nombre *</label>
+          <input class="input" id="{{ ids.name }}" name="name" autocomplete="name" maxLength="80" aria-invalid="{{ inv.name }}" aria-describedby="{{ ids.nameErr }}" style="min-height:46px;font-size:15px;background:var(--color-neutral-100)">
+          <sc-if value="{{ errors.name }}"><p id="{{ ids.nameErr }}" role="alert" style="margin:6px 0 0 6px;font-size:13px;color:var(--color-accent-800);font-weight:700">{{ errors.name }}</p></sc-if>
+        </div>
+        <div class="field">
+          <label for="{{ ids.email }}" style="font-size:13px;font-weight:600;color:var(--color-neutral-800)">Correo electrónico *</label>
+          <input class="input" id="{{ ids.email }}" name="email" type="email" autocomplete="email" maxLength="120" aria-invalid="{{ inv.email }}" aria-describedby="{{ ids.emailErr }}" style="min-height:46px;font-size:15px;background:var(--color-neutral-100)">
+          <sc-if value="{{ errors.email }}"><p id="{{ ids.emailErr }}" role="alert" style="margin:6px 0 0 6px;font-size:13px;color:var(--color-accent-800);font-weight:700">{{ errors.email }}</p></sc-if>
+        </div>
+        <div class="field">
+          <label for="{{ ids.phone }}" style="font-size:13px;font-weight:600;color:var(--color-neutral-800)">Teléfono (opcional)</label>
+          <input class="input" id="{{ ids.phone }}" name="phone" type="tel" autocomplete="tel" maxLength="25" placeholder="+34 …" aria-invalid="{{ inv.phone }}" aria-describedby="{{ ids.phoneErr }}" style="min-height:46px;font-size:15px;background:var(--color-neutral-100)">
+          <sc-if value="{{ errors.phone }}"><p id="{{ ids.phoneErr }}" role="alert" style="margin:6px 0 0 6px;font-size:13px;color:var(--color-accent-800);font-weight:700">{{ errors.phone }}</p></sc-if>
+        </div>
+        <sc-if value="{{ showCountry }}" hint-placeholder-val="{{ true }}">
+          <div class="field">
+            <label for="{{ ids.country }}" style="font-size:13px;font-weight:600;color:var(--color-neutral-800)">País de residencia</label>
+            <select class="input" id="{{ ids.country }}" name="country" style="min-height:46px;font-size:15px;background:var(--color-neutral-100)"><option value="España">España</option><option value="Paraguay">Paraguay</option><option value="Otro">Otro país</option></select>
+          </div>
+        </sc-if>
+        <sc-if value="{{ showAdvice }}" hint-placeholder-val="{{ false }}">
+          <div class="field">
+            <label for="{{ ids.goal }}" style="font-size:13px;font-weight:600;color:var(--color-neutral-800)">Objetivo</label>
+            <select class="input" id="{{ ids.goal }}" name="goal" style="min-height:46px;font-size:15px;background:var(--color-neutral-100)"><option value="Aún no lo sé">Aún no lo sé</option><option value="Vivienda habitual">Vivienda habitual</option><option value="Segunda residencia">Segunda residencia</option><option value="Inversión">Inversión</option></select>
+          </div>
+          <div class="field">
+            <label for="{{ ids.term }}" style="font-size:13px;font-weight:600;color:var(--color-neutral-800)">Plazo</label>
+            <select class="input" id="{{ ids.term }}" name="term" style="min-height:46px;font-size:15px;background:var(--color-neutral-100)"><option value="Sin prisa">Sin prisa</option><option value="Menos de 6 meses">Menos de 6 meses</option><option value="6–12 meses">6–12 meses</option><option value="Más de 12 meses">Más de 12 meses</option></select>
+          </div>
+        </sc-if>
+      </div>
+      <sc-if value="{{ showGuide }}" hint-placeholder-val="{{ false }}">
+        <div class="field">
+          <label for="{{ ids.guide }}" style="font-size:13px;font-weight:600;color:var(--color-neutral-800)">Guía que te interesa *</label>
+          <select class="input" id="{{ ids.guide }}" name="guide" aria-invalid="{{ inv.guide }}" style="min-height:46px;font-size:15px;background:var(--color-neutral-100)"><option value="">Elige una guía</option><option value="Checklist antes de comprar">Checklist antes de comprar</option><option value="Cómo leer un precio en Paraguay">Cómo leer un precio en Paraguay</option><option value="Comprar a distancia desde España">Comprar a distancia desde España</option></select>
+          <sc-if value="{{ errors.guide }}"><p role="alert" style="margin:6px 0 0 6px;font-size:13px;color:var(--color-accent-800);font-weight:700">{{ errors.guide }}</p></sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ showMessage }}" hint-placeholder-val="{{ true }}">
+        <div class="field">
+          <label for="{{ ids.message }}" style="font-size:13px;font-weight:600;color:var(--color-neutral-800)">{{ messageLabel }}</label>
+          <textarea class="input" id="{{ ids.message }}" name="message" maxLength="1500" defaultValue="{{ defaultMessage }}" aria-invalid="{{ inv.message }}" aria-describedby="{{ ids.messageErr }}" style="min-height:120px;padding:12px 16px;border-radius:10px;font-size:15px;line-height:1.5;background:var(--color-neutral-100)"></textarea>
+          <sc-if value="{{ errors.message }}"><p id="{{ ids.messageErr }}" role="alert" style="margin:6px 0 0 6px;font-size:13px;color:var(--color-accent-800);font-weight:700">{{ errors.message }}</p></sc-if>
+        </div>
+      </sc-if>
+      <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"><label>No rellenar este campo <input name="website" tabIndex="-1" autocomplete="off"></label></div>
+      <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;cursor:pointer">
+        <input type="checkbox" name="consent" aria-invalid="{{ inv.consent }}" style="margin-top:2px;accent-color:var(--color-accent);width:18px;height:18px;flex:none">
+        <span>He leído la <a href="#/legal/privacidad" style="color:var(--color-accent-700);font-weight:700">política de privacidad</a> y acepto que Aquaterra trate mis datos para responder a esta solicitud. *</span>
+      </label>
+      <sc-if value="{{ errors.consent }}"><p role="alert" style="margin:-6px 0 0 28px;font-size:13px;color:var(--color-accent-800);font-weight:700">{{ errors.consent }}</p></sc-if>
+      <sc-if value="{{ errors.form }}"><p role="alert" style="margin:0;padding:12px 18px;border-radius:10px;background:var(--color-accent-100);font-size:14px;color:var(--color-accent-800)">{{ errors.form }}</p></sc-if>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+        <button type="submit" class="btn btn-primary" style="min-height:50px;padding:0 28px;font-size:16px">{{ submitLabel }}</button>
+        <span style="font-size:12px;line-height:1.4;color:var(--color-neutral-700)">* Obligatorio. No envíes datos bancarios ni documentos de identidad.</span>
+      </div>
+    </form>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:560,&quot;height&quot;:640},&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;contacto&quot;,&quot;propiedad&quot;,&quot;asesoramiento&quot;,&quot;guia&quot;,&quot;chat&quot;],&quot;default&quot;:&quot;contacto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Escríbenos&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;intro&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;submitLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Enviar solicitud&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;compact&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;defaultMessage&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;propertyId&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;propertyTitle&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;uid&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { errors: {}, sent: false };
+  mountedAt = Date.now();
+  labels = { contacto: 'Consulta general', propiedad: 'Consulta de propiedad', asesoramiento: 'Asesoramiento España–Paraguay', guia: 'Solicitud de guía', chat: 'Derivación desde asistente' };
+  kind() { return this.props.kind || 'contacto'; }
+  onSubmit = (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const one = (k, n) => String(fd.get(k) || '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').trim().slice(0, n);
+    if (one('website', 200)) { this.setState({ sent: true }); return; }
+    const k = this.kind(), errors = {};
+    const name = one('name', 80), email = one('email', 120).toLowerCase(), phone = one('phone', 25);
+    const country = one('country', 30), guide = one('guide', 80), goal = one('goal', 40), term = one('term', 40);
+    const message = String(fd.get('message') || '').replace(/[\u0000-\u0009\u000b-\u001f\u007f<>]/g, ' ').trim().slice(0, 1500);
+    if (name.length < 2) errors.name = 'Indica tu nombre (mínimo 2 caracteres).';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) errors.email = 'Introduce un correo válido, por ejemplo nombre@dominio.es.';
+    if (phone && !/^\+?[\d\s().-]{7,20}$/.test(phone)) errors.phone = 'Revisa el teléfono: solo números, espacios y prefijo (+34, +595…).';
+    if (k === 'guia' && !guide) errors.guide = 'Elige la guía que quieres recibir.';
+    if (k !== 'guia' && message.length < 10) errors.message = 'Cuéntanos un poco más (mínimo 10 caracteres).';
+    if (!fd.get('consent')) errors.consent = 'Necesitamos tu consentimiento para tratar la solicitud.';
+    if (!Object.keys(errors).length) {
+      let log = [];
+      try { log = JSON.parse(localStorage.getItem('aq_submit_log') || '[]').filter(t => Date.now() - t < 600000); } catch (_) {}
+      if (Date.now() - this.mountedAt < 2500) errors.form = 'El envío ha sido demasiado rápido. Espera unos segundos y vuelve a intentarlo.';
+      else if (log.length >= 3) errors.form = 'Has enviado varias solicitudes en pocos minutos. Inténtalo de nuevo más tarde.';
+      else {
+        const now = new Date().toISOString();
+        const lead = { id: 'L-' + Date.now().toString(36).toUpperCase(), createdAt: now, kind: k, kindLabel: this.labels[k] || k, name, email, phone, country, guide, goal, term, message, propertyId: this.props.propertyId || '', propertyTitle: this.props.propertyTitle || '', status: 'Nuevo', consentAt: now, consentText: 'Política de privacidad (borrador v0)' };
+        try {
+          const leads = JSON.parse(localStorage.getItem('aq_leads') || '[]');
+          leads.unshift(lead);
+          localStorage.setItem('aq_leads', JSON.stringify(leads.slice(0, 500)));
+          log.push(Date.now());
+          localStorage.setItem('aq_submit_log', JSON.stringify(log));
+        } catch (_) { errors.form = 'No se ha podido guardar la solicitud en este navegador. Revisa que el almacenamiento local esté permitido.'; }
+        if (!errors.form) {
+          window.dispatchEvent(new CustomEvent('aq:lead', { detail: { kind: k } }));
+          this.setState({ sent: true, errors: {} });
+          return;
+        }
+      }
+    }
+    this.setState({ errors }, () => { const el = form.querySelector('[aria-invalid="true"]'); if (el) el.focus(); });
+  };
+  renderVals() {
+    const k = this.kind(), u = this.props.uid || k, e = this.state.errors;
+    const id = (s) => 'lf-' + u + '-' + s;
+    const inv = {};
+    ['name', 'email', 'phone', 'message', 'guide', 'consent'].forEach(f => { inv[f] = e[f] ? 'true' : 'false'; });
+    const pt = this.props.propertyTitle;
+    return {
+      sent: this.state.sent, notSent: !this.state.sent, onSubmit: this.onSubmit,
+      reset: () => { this.mountedAt = Date.now(); this.setState({ sent: false, errors: {} }); },
+      errors: e, inv,
+      cols: this.props.compact ? '1fr' : 'repeat(auto-fit,minmax(min(100%,200px),1fr))',
+      ids: { name: id('name'), nameErr: id('name-err'), email: id('email'), emailErr: id('email-err'), phone: id('phone'), phoneErr: id('phone-err'), country: id('country'), goal: id('goal'), term: id('term'), guide: id('guide'), message: id('msg'), messageErr: id('msg-err') },
+      title: this.props.title || '', hasTitle: !!this.props.title,
+      intro: this.props.intro || '', hasIntro: !!this.props.intro,
+      submitLabel: this.props.submitLabel || 'Enviar solicitud',
+      showCountry: k !== 'propiedad' && !this.props.compact, showGuide: k === 'guia', showMessage: k !== 'guia', showAdvice: k === 'asesoramiento',
+      messageLabel: k === 'propiedad' ? 'Tu consulta sobre esta propiedad *' : '¿En qué podemos ayudarte? *',
+      defaultMessage: this.props.defaultMessage || (k === 'propiedad' && pt ? 'Hola, me interesa «' + pt + '». Me gustaría recibir más información.' : ''),
+      successText: k === 'guia' ? 'Te avisaremos por correo cuando la guía descargable esté publicada.' : 'Un asesor revisará tu mensaje y te responderá por correo electrónico.'
+    };
+  }
+}
+</script>
+</body>
+</html>

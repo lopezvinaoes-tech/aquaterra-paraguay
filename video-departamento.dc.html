@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aquaterra · Vídeo del departamento</title>
+  <link rel="stylesheet" href="_ds/organic-da957c01-6e51-46d7-b9d5-5aebaf52fbd9/styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="./aquaterra-theme.css">
+  <script src="_ds/organic-da957c01-6e51-46d7-b9d5-5aebaf52fbd9/_ds_bundle.js"></script>
+  <script src="./aq-data-asuncion.js"></script>
+  <script>window.OM_SCENES = '[{"name":"Ciudad","dur":2.4,"desc":"La ciudad de Asunción se levanta de noche y la cámara avanza hacia el solar"},{"name":"Edificio","dur":2.4,"desc":"La torre se apila planta a planta y la planta del departamento se ilumina en dorado"},{"name":"Plano","dur":3.2,"desc":"La planta se despliega en un plano visto desde arriba: muros, estancias y metros cuadrados"},{"name":"Detalles","dur":2.8,"desc":"El plano se inclina en 3D mientras aparecen las características"},{"name":"Precio","dur":3,"desc":"El plano se aparta y aparecen el precio, la disponibilidad y el contacto"},{"name":"Ficha","dur":3.6,"desc":"El precio deja paso a la ficha técnica completa, que se construye fila a fila junto al plano"}]';</script>
+  <script>window.OM_PLAYBACK = '{"mode":"times","count":1}';</script>
+  <style>
+    html,body{margin:0;height:100%;background:#0b0a08}
+    a{color:#f7c548}
+    a:hover{color:#ffe7a3}
+  </style>
+</helmet>
+<div style="position:fixed;inset:0;background:#0b0a08">
+  <x-import component-from-global-scope="AptVideo" from="./animations-v3.jsx ./video-apartamento.jsx" listing="{{ listing }}" hint-size="100%,100%" style="position:absolute;inset:0"></x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;motionEditor&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Vídeo&quot;},&quot;listing&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;AQ-001&quot;,&quot;AQ-004&quot;,&quot;AQ-008&quot;],&quot;default&quot;:&quot;AQ-001&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Vídeo&quot;}}">
+class Component extends DCLogic {
+  renderVals() { return { listing: this.props.listing ?? 'AQ-001' }; }
+}
+</script>
+</body>
+</html>
