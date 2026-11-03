@@ -9,6 +9,7 @@ import { EffectComposer } from './vendor/three/EffectComposer.js';
 import { RenderPass } from './vendor/three/RenderPass.js';
 import { UnrealBloomPass } from './vendor/three/UnrealBloomPass.js';
 import { OutputPass } from './vendor/three/OutputPass.js';
+import { mergeGeometries } from './vendor/three/BufferGeometryUtils.js';
 import { analyze } from './aq-plan.js';
 import { makeTextures, loadManifest, applyRealTextures } from './aq-r3d-mats.js';
 import { buildExterior, buildNight, wind, windify } from './aq-r3d-env.js';
@@ -181,6 +182,35 @@ export async function createViewer(el, input, cb = {}) {
   scene.fog = new THREE.FogExp2(0xc5d3dc, 0.0011);
   let hour = cb.hour ?? 10.5, lightsMode = 'auto', lf = 0, lTarget = 0, dayF = 1;
   const fogDay = new THREE.Color(0xc4d2dc), fogDusk = new THREE.Color(0xd8a77e), fogNight = new THREE.Color(0x0b1222), tmpC = new THREE.Color();
+
+  // — fondo precalculado: cerros y bosque lejano horneados en dos imágenes (fondo/aq-pano-0/1.webp) —
+  // RGB = color con luz de mediodía (a mitad de intensidad) · A = 1 − 0,96 × niebla (0 = cielo)
+  const PANO = { tanTop: 0.6249, tanBot: -0.0875, R: 4000, files: ['aq-pano-0.webp', 'aq-pano-1.webp'] };
+  const panoU = { tint: { value: new THREE.Color(2, 2, 2) }, fogC: { value: new THREE.Color() } };
+  let pano = null;
+  const loadPano = () => cb.pano === false ? Promise.resolve(null) : Promise.all(PANO.files.map(f => new Promise(res => new THREE.TextureLoader().load(BASE + 'fondo/' + f, t => res(t), undefined, () => res(null))))).then(ts => ts.every(Boolean) ? ts : null);
+  function makePano(ts) {
+    const g = new THREE.Group(), N = 96;
+    ts.forEach((t, k) => {
+      t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter;
+      const pos = [], uv = [], idx = [];
+      for (let j = 0; j <= N; j++) { const a = (k + j / N) * PI, x = Math.cos(a) * PANO.R, z = Math.sin(a) * PANO.R; pos.push(x, PANO.tanBot * PANO.R, z, x, PANO.tanTop * PANO.R, z); uv.push(j / N, 0, j / N, 1); if (j < N) { const b = j * 2; idx.push(b, b + 2, b + 1, b + 1, b + 2, b + 3); } }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+      const mat = new THREE.ShaderMaterial({
+        uniforms: { map: { value: t }, tint: panoU.tint, fogC: panoU.fogC }, side: THREE.DoubleSide, fog: false,
+        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform vec3 fogC; varying vec2 vUv;
+          void main(){ vec4 t = texture2D(map, vUv); if (t.a < 0.02) discard; float f = clamp((1.0 - t.a) / 0.96, 0.0, 1.0);
+            gl_FragColor = vec4(mix(t.rgb * tint, fogC, f), 1.0);
+            #include <tonemapping_fragment>
+            #include <colorspace_fragment>
+          }`
+      });
+      const m = new THREE.Mesh(geo, mat); m.frustumCulled = false; m.renderOrder = -1; g.add(m);
+    });
+    return g;
+  }
+  const panoP = loadPano();
   function applyTime() {
     const lat = -25.3 * D2R, dec = -9 * D2R, H = (hour - 12.25) * 15 * D2R;
     const E = -Math.cos(dec) * Math.sin(H), Nn = Math.sin(dec) * Math.cos(lat) - Math.cos(dec) * Math.sin(lat) * Math.cos(H), U = Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(H);
@@ -195,6 +225,8 @@ export async function createViewer(el, input, cb = {}) {
     renderer.toneMappingExposure = 0.72 + (1 - day) * 0.34;
     scene.fog.color.copy(fogNight).lerp(fogDusk, smooth(-0.12, 0.02, U)).lerp(fogDay, smooth(0.05, 0.3, U));
     night.set(1 - smooth(-0.16, 0.0, U), moonDir);
+    // el panorama se horneó a mediodía con media luz: se reescala y se tiñe como el sol y el cielo
+    panoU.fogC.value.copy(scene.fog.color); panoU.tint.value.setRGB(0.05, 0.06, 0.1).lerp(tmpC.setRGB(1.8, 1.75, 1.7).lerp(new THREE.Color(1.9, 1.35, 0.95), gold * 0.7), smooth(-0.12, 0.25, U));
     if (bloom) { bloom.strength = 0.06 + 0.32 * (1 - day); bloom.threshold = 0.9 + 1.6 * day; }
     lTarget = lightsMode === 'on' ? 1 : lightsMode === 'off' ? 0 : (U < 0.14 ? 1 : 0);
     envDirty = true;
@@ -229,7 +261,7 @@ export async function createViewer(el, input, cb = {}) {
     if (lf !== lTarget) { lf += clamp(lTarget - lf, -dt * 1.5, dt * 1.5); }
     for (const l of pool) l.intensity = l.userData.base * lf;
     for (const m of glowMats) m.emissiveIntensity = m.userData.glow * lf;
-    wind.value = now / 1000; for (const b of fans) b.rotation.y += dt * 2.4;
+    wind.value = now / 1000; if (pano) pano.position.copy(camera.position); for (const b of fans) b.rotation.y += dt * 2.4;
     if (envDirty && now - envAt > (low ? 400 : 160)) regenEnv();
     if (cb.minimap && ++mmFrame % 2 === 0) drawMinimap();
     draw();
@@ -379,7 +411,8 @@ export async function createViewer(el, input, cb = {}) {
     o.position.set(0, 0, 0); o.rotation.set(0, (meta.rot || 0) * D2R, 0); o.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
     o.position.set(-c.x, meta.hang ? -box.max.y : -box.min.y, -c.z); o.updateMatrixWorld(true);
-    o.traverse(m => { if (m.isMesh) { m.castShadow = !(m.material && m.material.userData && m.material.userData.glow); m.receiveShadow = true; } });
+    // sólo proyectan sombra las piezas grandes (manillas, tornillos o cojines pequeños no se notan y cuestan una llamada de dibujo más)
+    const ws = new THREE.Vector3(); o.traverse(m => { if (m.isMesh) { if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere(); m.getWorldScale(ws); const big = m.geometry.boundingSphere.radius * Math.max(ws.x, ws.y, ws.z) > 0.14; m.castShadow = big && !(m.material && m.material.userData && m.material.userData.glow); m.receiveShadow = true; } });
     const g = new THREE.Group(); g.userData.model = true; g.add(o); g.updateMatrixWorld(true);
     const it = { g, w: s.x, d: s.z, h: s.y, model: true, meta, root: o };
     let lp = null; if (meta.light === 'node:light' || meta.light === undefined) { const n = o.getObjectByName('light'); if (n) lp = n.getWorldPosition(new THREE.Vector3()); } else if (Array.isArray(meta.light)) lp = new THREE.Vector3(...meta.light).applyMatrix4(o.matrixWorld);
@@ -396,7 +429,18 @@ export async function createViewer(el, input, cb = {}) {
   let ctx = null;
   const fpOf = (w, d, x, z, ry) => { const c = Math.abs(Math.cos(ry)), s = Math.abs(Math.sin(ry)), hw = (w * c + d * s) / 2, hd = (w * s + d * c) / 2; return [x - hw, x + hw, z - hd, z + hd]; };
   const over = (a, b, t = 0.015) => a[0] < b[1] - t && a[1] > b[0] + t && a[2] < b[3] - t && a[3] > b[2] + t;
+  // une las piezas de un mueble procedural que comparten material: muchas menos llamadas de dibujo
+  function compact(g) {
+    g.updateMatrixWorld(true); const inv = g.matrixWorld.clone().invert(), buckets = new Map();
+    g.traverse(m => { if (!m.isMesh || m.isInstancedMesh || Array.isArray(m.material) || !m.geometry.index) return; const k = m.material.uuid + '|' + Object.keys(m.geometry.attributes).sort().join(',') + '|' + m.castShadow; if (!buckets.has(k)) buckets.set(k, []); buckets.get(k).push(m); });
+    buckets.forEach(list => {
+      if (list.length < 2) return; const geos = list.map(m => m.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld))), merged = mergeGeometries(geos); geos.forEach(q => q.dispose()); if (!merged) return;
+      const n = new THREE.Mesh(merged, list[0].material); n.castShadow = list[0].castShadow; n.receiveShadow = true;
+      list.forEach(m => { m.parent.remove(m); if (!m.userData.shared) m.geometry.dispose(); }); g.add(n);
+    });
+  }
   function place(it, x, z, ry, solid, y = 0, o = {}) {
+    if (!it.model && !it.packed) { try { compact(it.g); } catch (e) { /* se queda sin unir */ } it.packed = true; }
     if (it.w0 === undefined) { it.w0 = it.w; it.d0 = it.d; it.h0 = it.h; }
     if (!o.keepScale) { const s0 = o.scale || 1; it.w = it.w0 * s0; it.d = it.d0 * s0; it.h = (it.h0 || 0) * s0; it.g.scale.setScalar(s0); }
     if (ctx && !o.free) {
@@ -722,7 +766,8 @@ export async function createViewer(el, input, cb = {}) {
     const sc = sun.shadow.camera, ex = size / 2 + 6; sc.left = -ex; sc.right = ex; sc.top = ex; sc.bottom = -ex; sc.near = 1; sc.far = size * 3 + 90; sc.updateProjectionMatrix(); scene.add(sun, sun.target, hemi);
     const plinth = mesh(boxGeo(b.x1 - b.x0 + 1.6, 0.42, b.y1 - b.y0 + 1.6), M.sidewalk, 0, -0.45, 0); worldUV(plinth.geometry, 0, 0, 0); scene.add(plinth);
     let entryW = null; if (an.entry) { const o = an.entry, n = into(o, o.room); entryW = { x: wx(o.x), z: wz(o.y), nx: n[0], nz: n[1] }; }
-    ext = buildExterior({ T, M, low, hx: (b.x1 - b.x0) / 2 + 0.8, hz: (b.y1 - b.y0) / 2 + 0.8, entry: entryW, camDir: { x: 0.62, z: 0.86 }, maxH }); scene.add(ext.group); ['grass', 'terrainRock'].forEach(k => REAL[k] && ext.setGround(k, REAL[k]));
+    const pt = await panoP; if (pt && !pano) { pano = makePano(pt); scene.add(pano); }
+    ext = buildExterior({ T, M, low, hx: (b.x1 - b.x0) / 2 + 0.8, hz: (b.y1 - b.y0) / 2 + 0.8, entry: entryW, camDir: { x: 0.62, z: 0.86 }, maxH, far: !pano }); scene.add(ext.group); ['grass', 'terrainRock'].forEach(k => REAL[k] && ext.setGround(k, REAL[k]));
     await anim(700, k => { prog(1, k); });
     await modelsP;
     // muros, aberturas, suelos y muebles
@@ -748,7 +793,8 @@ export async function createViewer(el, input, cb = {}) {
     o.position.sub(new THREE.Vector3(c.x, box.min.y, c.z)); o.traverse(m => { if (m.isMesh) { m.castShadow = m.receiveShadow = true; } }); scene.add(o);
     size = Math.max(s.x, s.z, 4); center.set(0, s.y * 0.3, 0);
     const sc = sun.shadow.camera, ex = size / 2 + 4; sc.left = -ex; sc.right = ex; sc.top = ex; sc.bottom = -ex; sc.far = size * 3 + 60; sc.updateProjectionMatrix(); scene.add(sun, sun.target, hemi);
-    ext = buildExterior({ T, M, low, hx: s.x / 2 + 0.5, hz: s.z / 2 + 0.5, entry: null, camDir: { x: 0.6, z: 0.8 }, maxH: s.y }); scene.add(ext.group); fixtures = ext.fixtures.slice(); assignLights();
+    const pt = await panoP; if (pt && !pano) { pano = makePano(pt); scene.add(pano); }
+    ext = buildExterior({ T, M, low, hx: s.x / 2 + 0.5, hz: s.z / 2 + 0.5, entry: null, camDir: { x: 0.6, z: 0.8 }, maxH: s.y, far: !pano }); scene.add(ext.group); fixtures = ext.fixtures.slice(); assignLights();
     const D = size * 1.2 + 4; camera.position.set(D * 0.6, D * 0.6, D * 0.8); controls.target.copy(center); controls.maxDistance = Math.max(D * 3, 120); controls.update();
     await anim(500, k => prog(7, k));
     return { rooms: [], H: null, doors: 0 };
@@ -826,6 +872,37 @@ export async function createViewer(el, input, cb = {}) {
     // fachada: 'revoque' | 'ladrillo' | 'piedra'
     setFacade(k) { if (!facadeKeys[k]) return; facade = k; refreshFacade(); },
     photo() { draw(); return cv.toDataURL('image/jpeg', 0.92); },
+    // herramienta interna: hornea el fondo lejano (> 600 m) en dos imágenes WebP de 4096 px. Requiere el modo 3D completo (pano: false)
+    bakePano(W = 8192, slices = 128) {
+      const Hh = Math.round(W / (2 * PI) * (PANO.tanTop - PANO.tanBot) / 2) * 2, sw = W / slices, d = 2 * PI / slices, near = 600, far = 29000, eye = 1.7;
+      const keep = { fog: scene.fog, tm: renderer.toneMapping, hour, si: 0, hi: 0, ei: 0 };
+      hour = 12.25; applyTime(); sun.intensity *= 0.5; hemi.intensity *= 0.5; scene.environmentIntensity *= 0.5;
+      const hidden = [sky, night.group, house, furn].filter(o => o.visible); hidden.forEach(o => { o.visible = false; });
+      scene.fog = null; renderer.toneMapping = THREE.NoToneMapping; const bg = scene.background; scene.background = null; renderer.setClearColor(0x000000, 0);
+      const rtC = new THREE.WebGLRenderTarget(sw, Hh), rtF = new THREE.WebGLRenderTarget(sw, Hh); rtC.texture.colorSpace = THREE.SRGBColorSpace;
+      const distM = new THREE.ShaderMaterial({ uniforms: { dens: { value: 0.0011 } }, side: THREE.DoubleSide,
+        vertexShader: '#include <common>\nvarying vec3 vW; void main(){ vec4 p = vec4(position, 1.0);\n#ifdef USE_INSTANCING\np = instanceMatrix * p;\n#endif\np = modelMatrix * p; vW = p.xyz; gl_Position = projectionMatrix * viewMatrix * p; }',
+        fragmentShader: 'uniform float dens; varying vec3 vW; void main(){ float dd = length(vW - cameraPosition) * dens; float f = 1.0 - exp(-dd * dd); gl_FragColor = vec4(f, f, f, 1.0); }' });
+      const cam = new THREE.PerspectiveCamera(), bufC = new Uint8Array(sw * Hh * 4), bufF = new Uint8Array(sw * Hh * 4), half = W / 2;
+      const outs = [0, 1].map(() => { const c = document.createElement('canvas'); c.width = half; c.height = Hh; return c; }), imgs = outs.map(c => c.getContext('2d').createImageData(half, Hh));
+      const gy = ext && ext.gh ? Math.max(0, ext.gh(0, 0)) : 0;
+      for (let i = 0; i < slices; i++) {
+        const a = (i + 0.5) * d, tw = Math.tan(d / 2);
+        cam.position.set(0, gy + eye, 0); cam.up.set(0, 1, 0); cam.lookAt(Math.cos(a), gy + eye, Math.sin(a));
+        cam.projectionMatrix.makePerspective(-near * tw, near * tw, near * PANO.tanTop, near * PANO.tanBot, near, far); cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
+        renderer.setRenderTarget(rtC); renderer.clear(); renderer.render(scene, cam); renderer.readRenderTargetPixels(rtC, 0, 0, sw, Hh, bufC);
+        scene.overrideMaterial = distM; renderer.setRenderTarget(rtF); renderer.clear(); renderer.render(scene, cam); renderer.readRenderTargetPixels(rtF, 0, 0, sw, Hh, bufF); scene.overrideMaterial = null;
+        const k = Math.floor(i * sw / half), img = imgs[k], x0 = i * sw - k * half;
+        for (let y = 0; y < Hh; y++) for (let x = 0; x < sw; x++) {
+          const s4 = ((Hh - 1 - y) * sw + x) * 4, o4 = (y * half + x0 + x) * 4, cov = bufC[s4 + 3] > 127;
+          img.data[o4] = bufC[s4]; img.data[o4 + 1] = bufC[s4 + 1]; img.data[o4 + 2] = bufC[s4 + 2]; img.data[o4 + 3] = cov ? Math.round(255 * (1 - 0.96 * bufF[s4] / 255)) : 0;
+        }
+      }
+      renderer.setRenderTarget(null); rtC.dispose(); rtF.dispose(); distM.dispose();
+      outs.forEach((c, k) => c.getContext('2d').putImageData(imgs[k], 0, 0));
+      scene.fog = keep.fog; renderer.toneMapping = keep.tm; scene.background = bg; hidden.forEach(o => { o.visible = true; }); hour = keep.hour; applyTime();
+      return outs.map(c => c.toDataURL('image/webp', 0.9));
+    },
     get three() { return { THREE, camera, controls, scene, renderer, doors, fixtures, pool, items }; },
     dispose() { dead = true; renderer.setAnimationLoop(null); ro.disconnect(); clearTimeout(hT); removeEventListener('keydown', onKey); removeEventListener('keyup', onKey); removeEventListener('blur', onBlur); if (mm) mm.removeEventListener('click', onMM); controls.dispose(); if (envRT) envRT.dispose(); pmrem.dispose(); if (composer) composer.dispose(); renderer.dispose(); try { renderer.forceContextLoss(); } catch (e) {} el.innerHTML = ''; }
   };
