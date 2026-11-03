@@ -90,7 +90,7 @@ Los modelos de Poly Haven se descargaron de copias públicas en GitHub (polyhave
 | textures/granite_tile/ | Encimera/suelo: granito — 1.0 m por repetición | CC0 1.0 — Poly Haven (autor: —) | polyhaven.com/a/granite_tile vía github.com/Very-Real-Engine/ALEngine; no verificado por hash |
 | textures/forrest_ground_03/ | Canteros/jardín: tierra con hojarasca — 2.0 m por repetición | CC0 1.0 — Poly Haven (autor: —) | polyhaven.com/a/forrest_ground_03 vía npm aframe-enviropacks; no verificado por hash |
 
-Total: 51 modelos y 30 juegos de texturas, 168 MB.
+Total: 51 modelos (.glb) y 30 juegos de texturas (.webp), 45 MB. Optimizados para web: geometría cuantizada y texturas WebP.
 
 ## Licencias de terceros
 
