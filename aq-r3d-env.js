@@ -118,6 +118,10 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
   const G = new THREE.Group(), R = rng(2024), fixtures = [], rockU = { value: T.rock.map }, tintU = { value: new THREE.Color(1, 1, 1) }; let terrainMat = null;
   const flatR = Math.max(hx, hz) + 10;
   const inHouse = (x, z, m) => Math.abs(x) < hx + m && Math.abs(z) < hz + m;
+  // regla dura: ninguna planta (contando todo su volumen, hojas incluidas) a menos de 10 cm de la casa y su acera
+  const HB = new THREE.Box3(V(-hx - 0.1, -1e4, -hz - 0.1), V(hx + 0.1, 1e4, hz + 0.1)), tb = new THREE.Box3();
+  const away = (box, m4) => !tb.copy(box).applyMatrix4(m4).intersectsBox(HB);
+  const bbOf = geo => { if (!geo.boundingBox) geo.computeBoundingBox(); return geo.boundingBox; };
   const pathRect = entry ? (() => { const L = 9, w = 1.6; const x0 = entry.x - entry.nx * 0.6, z0 = entry.z - entry.nz * 0.6, x1 = entry.x - entry.nx * (L + 0.6), z1 = entry.z - entry.nz * (L + 0.6); return [Math.min(x0, x1) - (entry.nx ? 0 : w / 2), Math.max(x0, x1) + (entry.nx ? 0 : w / 2), Math.min(z0, z1) - (entry.nz ? 0 : w / 2), Math.max(z0, z1) + (entry.nz ? 0 : w / 2)]; })() : null;
   // entradas de coche (garajes): rectángulo de pavimento delante de cada portón
   const driveRects = drives.map(d => { const L = d.len || 6.5, w = d.w + 0.8, x0 = d.x - d.nx * 0.12, z0 = d.z - d.nz * 0.12, x1 = d.x - d.nx * (L + 0.12), z1 = d.z - d.nz * (L + 0.12); return [Math.min(x0, x1) - (d.nx ? 0 : w / 2), Math.max(x0, x1) + (d.nx ? 0 : w / 2), Math.min(z0, z1) - (d.nz ? 0 : w / 2), Math.max(z0, z1) + (d.nz ? 0 : w / 2)]; });
@@ -201,7 +205,7 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
   trees.forEach(t => {
     const v = mk(t.k, t.i), s = 0.85 + R() * 0.35, y = gh(t.x, t.z);
     const w = new THREE.Mesh(v.geo.wood, M.bark), l = new THREE.Mesh(v.geo.leaves, v.lm);
-    const ry = R() * PI * 2; [w, l].forEach(m => { m.position.set(t.x, y, t.z); m.scale.setScalar(s); m.rotation.y = ry; m.castShadow = true; m.receiveShadow = true; G.add(m); }); Object.assign(t, { meshes: [w, l], y, s, ry });
+    const ry = R() * PI * 2; [w, l].forEach(m => { m.position.set(t.x, y, t.z); m.scale.setScalar(s); m.rotation.y = ry; m.castShadow = true; m.receiveShadow = true; m.updateMatrix(); if (away(bbOf(m.geometry), m.matrix)) G.add(m); else m.visible = false; }); Object.assign(t, { meshes: [w, l], y, s, ry });
   });
 
   // — bosque y arboledas lejanas (instanciado) —
@@ -239,7 +243,7 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
     }
     vars.forEach(([geo, mat], vi) => {
       const list = spots.filter(s => s.v === vi); if (!list.length) return; const im = new THREE.InstancedMesh(geo, mat, list.length), m4 = new THREE.Matrix4();
-      list.forEach((s, i) => { const sc = 0.8 + R() * 0.5; m4.compose(V(s.x, gh(s.x, s.z), s.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R() * 6.28, 0)), V(sc, sc * (0.8 + R() * 0.4), sc)); im.setMatrixAt(i, m4); });
+      let k = 0; list.forEach(s => { const sc = 0.8 + R() * 0.5; m4.compose(V(s.x, gh(s.x, s.z), s.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R() * 6.28, 0)), V(sc, sc * (0.8 + R() * 0.4), sc)); if (away(bbOf(geo), m4)) im.setMatrixAt(k++, m4); }); im.count = k;
       clipify(mat); im.castShadow = true; im.receiveShadow = true; G.add(im); shrubIMs.push(im);
     });
   }
@@ -252,7 +256,7 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
       for (let t = 0; t < n * 6 && k < n; t++) {
         const a = R() * PI * 2, r = rmin + Math.pow(R(), 0.7) * (rmax - rmin), x = Math.cos(a) * r * 1.2, z = Math.sin(a) * r;
         if (inHouse(x, z, 0.95) || onPath(x, z, 0.35)) continue; if (N(x * 0.2 + 3, z * 0.2) < 0.38) continue;
-        const s = 0.6 + R() * 0.9; m4.compose(V(x, gh(x, z) - 0.02, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R() * 6.28, 0)), V(s, s * (0.7 + R() * 0.6), s)); im.setMatrixAt(k++, m4); list.push({ x, z, r: Math.hypot(x, z), m: m4.clone() });
+        const s = 0.6 + R() * 0.9; m4.compose(V(x, gh(x, z) - 0.02, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R() * 6.28, 0)), V(s, s * (0.7 + R() * 0.6), s)); if (!away(bbOf(geo), m4)) continue; im.setMatrixAt(k++, m4); list.push({ x, z, r: Math.hypot(x, z), m: m4.clone() });
       }
       clipify(mat); im.count = k; im.receiveShadow = true; G.add(im); return { im, list };
     };
@@ -269,7 +273,7 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
     geo.computeVertexNormals(); const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 4, uv.getY(i) * 2);
     for (let i = 0, k = 0; i < 60 && k < 9; i++) {
       const a = R() * PI * 2, r = Math.max(hx, hz) + 3 + R() * 14, x = Math.cos(a) * r, z = Math.sin(a) * r; if (inHouse(x, z, 2) || onPath(x, z, 1)) continue;
-      const m = new THREE.Mesh(geo, clipify(M.rock)), s = 0.25 + R() * 0.6; m.scale.set(s * (1 + R() * 0.6), s, s); m.position.set(x, gh(x, z) - s * 0.15, z); m.rotation.y = R() * 6; m.castShadow = m.receiveShadow = true; G.add(m); rocks.push({ m, x, z, s }); k++;
+      const m = new THREE.Mesh(geo, clipify(M.rock)), s = 0.25 + R() * 0.6; m.scale.set(s * (1 + R() * 0.6), s, s); m.position.set(x, gh(x, z) - s * 0.15, z); m.rotation.y = R() * 6; m.updateMatrix(); if (!away(bbOf(geo), m.matrix)) continue; m.castShadow = m.receiveShadow = true; G.add(m); rocks.push({ m, x, z, s }); k++;
     }
   }
   void maxH;
@@ -290,10 +294,10 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
     const parts = (sc, vname) => {
       const root = (vname && sc.getObjectByName(vname)) || sc; sc.updateMatrixWorld(true); const out = [], box = new THREE.Box3();
       root.traverse(o => { if (o.isMesh) { out.push({ geo: o.geometry, mat: o.material, rel: o.matrixWorld.clone() }); box.expandByObject(o); } });
-      return { out, size: box.getSize(V()), min: box.min.clone() };
+      return { out, box, size: box.getSize(V()), min: box.min.clone() };
     };
     // una InstancedMesh por pieza, con todas las posiciones
-    const instanced = (P, mats, shadow = true) => { if (!mats.length) return []; return P.out.map(pt => { const im = new THREE.InstancedMesh(pt.geo, Array.isArray(pt.mat) ? pt.mat.map(clipify) : clipify(pt.mat), mats.length); mats.forEach((M4, i) => im.setMatrixAt(i, m4.multiplyMatrices(M4, pt.rel))); im.castShadow = shadow; im.receiveShadow = true; G.add(im); return im; }); };
+    const instanced = (P, mats, shadow = true) => { mats = mats.filter(M4 => away(P.box, M4)); if (!mats.length) return []; return P.out.map(pt => { const im = new THREE.InstancedMesh(pt.geo, Array.isArray(pt.mat) ? pt.mat.map(clipify) : clipify(pt.mat), mats.length); mats.forEach((M4, i) => im.setMatrixAt(i, m4.multiplyMatrices(M4, pt.rel))); im.castShadow = shadow; im.receiveShadow = true; G.add(im); return im; }); };
     const at = (x, y, z, ry, s, sy) => new THREE.Matrix4().compose(V(x, y, z), q.setFromEuler(e.set(0, ry, 0)), V(s, sy ?? s, s));
     const variantsOf = m => (m.meta.variants && m.meta.variants.length ? m.meta.variants : [null]);
 
