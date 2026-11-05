@@ -25,7 +25,7 @@ const PICK = {
   sofaL: ['sofa_03'], sofaM: ['sofa_02'], sofaS: ['sofa_2p_156'], armchair: ['modern_arm_chair_01', 'mid_century_lounge_chair'], ottoman: ['Ottoman_01'],
   coffee: ['coffee_table_round_01', 'modern_coffee_table_01'], coffeeR: ['modern_coffee_table_01'], chair: ['dining_chair_02'], table: ['round_wooden_table_01'], tableR: ['wooden_table_02'], stool: ['bar_chair_round_01'],
   night: ['side_table_01', 'ClassicNightstand_01'], bedD: ['bed_double_160'], bedS: ['bed_single_90'], wardL: ['wardrobe_150'], wardS: ['wardrobe_100'], dresser: ['drawer_cabinet'], sideboard: ['modern_wooden_cabinet'],
-  shelf: ['wooden_display_shelves_01'], plant: ['calathea_orbifolia_01', 'potted_plant_02'], plantB: ['anthurium_botany_01', 'potted_plant_02'], plantS: ['potted_plant_04'], outdoor: ['outdoor_table_chair_set_01'],
+  shelf: ['wooden_display_shelves_01'], outdoor: ['outdoor_table_chair_set_01'],
   lamp: ['modern_ceiling_lamp_01'], pendant: ['lamp_pendant_01'], pendantI: ['hanging_industrial_lamp'], fan: ['ceiling_fan'], tlamp: ['lamp_table_01'], flamp: ['lamp_floor_01'], dlamp: ['desk_lamp_arm_01'],
   wallLamp: ['industrial_wall_lamp', 'industrial_wall_sconce'], street: ['street_lamp_01'], doorIn: ['door_interior_80'], doorEntry: ['door_entry_90']
 };
@@ -470,13 +470,6 @@ export async function createViewer(el, input, cb = {}) {
     // sólo proyectan sombra las piezas grandes (manillas, tornillos o cojines pequeños no se notan y cuestan una llamada de dibujo más)
     const ws = new THREE.Vector3(); o.traverse(m => { if (m.isMesh) { if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere(); m.getWorldScale(ws); const big = m.geometry.boundingSphere.radius * Math.max(ws.x, ws.y, ws.z) > 0.14; m.castShadow = big && !(m.material && m.material.userData && m.material.userData.glow); m.receiveShadow = true; } });
     const g = new THREE.Group(); g.userData.model = true; g.add(o);
-    // calathea y anturio vienen sin maceta: parecían brotar del suelo (o confundirse con hierba del terreno). Se les pone una.
-    if (/calathea|anthurium/.test(L.id)) {
-      const r = Math.max(0.16, Math.min(0.26, Math.min(s.x, s.z) * 0.3)), ph = Math.max(0.3, Math.min(0.42, s.y * 0.38));
-      const pot = add(g, cyl(r, ph, 28, r * 0.78), M.ceramic, 0, 0, 0), rim = add(g, cyl(r + 0.012, 0.035, 28), M.ceramic, 0, ph - 0.035, 0), soil = add(g, cyl(r - 0.01, 0.01, 24), M.black, 0, ph - 0.03, 0);
-      pot.name = 'maceta'; [pot, rim].forEach(m => { m.castShadow = true; m.receiveShadow = true; }); soil.castShadow = false;
-      o.position.y += ph - 0.03; s.y += ph - 0.03; s.x = Math.max(s.x, 2 * r); s.z = Math.max(s.z, 2 * r);
-    }
     g.updateMatrixWorld(true);
     const it = { g, w: s.x, d: s.z, h: s.y, model: true, meta, root: o };
     let lp = null; if (meta.light === 'node:light' || meta.light === undefined) { const n = o.getObjectByName('light'); if (n) lp = n.getWorldPosition(new THREE.Vector3()); } else if (Array.isArray(meta.light)) lp = new THREE.Vector3(...meta.light).applyMatrix4(o.matrixWorld);
@@ -614,7 +607,8 @@ export async function createViewer(el, input, cb = {}) {
       if (end === 'E') b[0] -= 0.9; else if (end === 'O') b[1] += 0.9; else if (end === 'S') b[2] -= 0.9; else b[3] += 0.9;
       ctx.occ.push({ tag: 'stair', b: [b[0] - 0.05, b[1] + 0.05, b[2] - 0.05, b[3] + 0.05] });
     });
-    const plant = (where = 'end', k = 'plant') => tryWalls(R, sd, { need: 0.6, at: c => where === 'end' ? c.iv[1] - 0.35 : c.iv[0] + 0.35, gap: 0.12, minScale: 0.6 }, () => inst(has(k) ? k : 'plant'));
+    // sin plantas decorativas de interior (pedido del cliente): se confundían con vegetación atravesando el suelo
+    const plant = () => null;
     const isNS = k => k === 'N' || k === 'S';
     if (t === 'salon') {
       const mkSofa = c => { const k = pickFit(['sofaL', 'sofaM', 'sofaS'], c.L - 0.1); if (k) return inst(k); return F.sofa(M, clamp(c.L - 0.25, 1.4, 2.3)); };
