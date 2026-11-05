@@ -2,7 +2,7 @@
 // (lapachos, palmeras pindó y frondosos), arbustos, hierba con viento, flores, rocas, camino y cielo nocturno.
 import * as THREE from './vendor/three/three.module.min.js';
 import { mergeGeometries } from './vendor/three/BufferGeometryUtils.js';
-import { rng, noise2 } from './aq-r3d-mats.js';
+import { rng, noise2 } from './aq-r3d-mats.js?v=20261105c';
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 const PI = Math.PI, V = (x, y, z) => new THREE.Vector3(x, y, z);

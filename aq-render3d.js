@@ -10,9 +10,9 @@ import { RenderPass } from './vendor/three/RenderPass.js';
 import { UnrealBloomPass } from './vendor/three/UnrealBloomPass.js';
 import { OutputPass } from './vendor/three/OutputPass.js';
 import { mergeGeometries } from './vendor/three/BufferGeometryUtils.js';
-import { analyze, analyzeAll } from './aq-plan.js';
-import { makeTextures, loadManifest, applyRealTextures } from './aq-r3d-mats.js';
-import { buildExterior, buildNight, wind, windify, setClip } from './aq-r3d-env.js';
+import { analyze, analyzeAll } from './aq-plan.js?v=20261105c';
+import { makeTextures, loadManifest, applyRealTextures } from './aq-r3d-mats.js?v=20261105c';
+import { buildExterior, buildNight, wind, windify, setClip } from './aq-r3d-env.js?v=20261105c';
 
 // primero se carga y se construye todo detrás de la pantalla de carga; después se ve la animación de construcción
 export const STEPS = ['Leyendo el plano', 'Texturas', 'Muebles 3D', 'Terreno y vegetación', 'Levantando la casa', 'Amueblando', 'Preparando gráficos', 'Construcción'];

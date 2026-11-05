@@ -397,7 +397,7 @@ class Component extends DCLogic {
 
   componentDidMount() {
     const start = this.props.pestanaInicial; if (start && start !== 'subir') this.setState({ tab: start });
-    import(new URL('aq-plan.js', document.baseURI).href).then(m => {
+    import(new URL('aq-plan.js?v=20261105c', document.baseURI).href).then(m => {
       this.P = m; let saved = null;
       try { saved = JSON.parse(localStorage.getItem('aq_r3d_plan') || 'null'); } catch (e) {}
       const t = m.PLANTILLAS[0], ok = saved && Array.isArray(saved.rooms) && saved.rooms.length;
@@ -532,7 +532,7 @@ class Component extends DCLogic {
     this.setState({ v: { name, phase: 'build', pct: 0, step: -1, label: 'Cargando el motor 3D', mode: 'orbit', tour: false, rooms: [], room: null, err: '', hour: 10.5, lights: 'auto', H: (input && input.H) || 2.7, doors: { total: 0, open: 0 }, facade: 'revoque', playing: false, furn: true, level: 'all', plantas: (input && input.plantas) || 1, wall: (input && input.colorPared) || '', floor: (input && input.suelo) || 'auto' } }, async () => {
       const upd = o => this.setState(s => s.v ? { v: Object.assign({}, s.v, o) } : null);
       try {
-        const E = await import(new URL('aq-render3d.js', document.baseURI).href);
+        const E = await import(new URL('aq-render3d.js?v=20261105c', document.baseURI).href);
         const el = this.stageRef.current; if (!el || !this.state.v) return;
         const api = await E.createViewer(el, input, {
           minimap: () => this.props.minimapa === false ? null : this.mmRef.current,
