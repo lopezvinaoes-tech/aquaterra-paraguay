@@ -26,6 +26,30 @@ function windy(mat, amp, inst) {
   return mat;
 }
 
+// recorte de vegetación: ninguna planta, hierba o roca del terreno se dibuja dentro de la planta de la casa
+// (rectángulos en coordenadas de mundo, hasta 48) por debajo de la cubierta. Así nada atraviesa el suelo, pase lo que pase con el modelo.
+export const clipU = { rects: { value: Array.from({ length: 48 }, () => new THREE.Vector4(1e6, -1e6, 1e6, -1e6)) }, n: { value: 0 }, top: { value: 0 } };
+export function setClip(rects, top) { rects.slice(0, 48).forEach((r, i) => clipU.rects.value[i].set(r[0], r[1], r[2], r[3])); clipU.n.value = Math.min(48, rects.length); clipU.top.value = top; }
+export function clipify(mat) {
+  if (!mat || mat.userData.clip) return mat; mat.userData.clip = true;
+  const prev = mat.onBeforeCompile, prevKey = mat.customProgramCacheKey && mat.customProgramCacheKey !== THREE.Material.prototype.customProgramCacheKey ? mat.customProgramCacheKey.bind(mat) : null;
+  mat.onBeforeCompile = (sh, r) => {
+    if (prev) prev.call(mat, sh, r);
+    sh.uniforms.uClipR = clipU.rects; sh.uniforms.uClipN = clipU.n; sh.uniforms.uClipTop = clipU.top;
+    sh.vertexShader = 'varying vec3 vClipW;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
+      vec4 clipW = vec4(transformed, 1.0);
+      #ifdef USE_INSTANCING
+      clipW = instanceMatrix * clipW;
+      #endif
+      vClipW = (modelMatrix * clipW).xyz;`);
+    sh.fragmentShader = 'uniform vec4 uClipR[48];\nuniform int uClipN;\nuniform float uClipTop;\nvarying vec3 vClipW;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+      if (vClipW.y < uClipTop) { for (int i = 0; i < 48; i++) { if (i >= uClipN) break; vec4 q = uClipR[i]; if (vClipW.x > q.x && vClipW.x < q.y && vClipW.z > q.z && vClipW.z < q.w) discard; } }`);
+  };
+  mat.customProgramCacheKey = () => (prevKey ? prevKey() : '') + '|clip';
+  mat.needsUpdate = true;
+  return mat;
+}
+
 export function windify(M) { windy(M.leaf, 0.03, false); windy(M.leaf2, 0.03, false); windy(M.lapacho, 0.03, false); windy(M.lapachoY, 0.03, false); windy(M.hibisco, 0.02, false); windy(M.frond, 0.05, false); windy(M.tuft, 0.07, true); windy(M.flowers, 0.06, true); }
 function cylBetween(a, b, ra, rb, seg) {
   const d = b.clone().sub(a), L = d.length(), g = new THREE.CylinderGeometry(rb, ra, L, seg, 1, true);
@@ -90,12 +114,15 @@ function shrub(seed, r) {
 function tuftGeo(w, h) { const gs = []; for (let k = 0; k < 3; k++) { const g = new THREE.PlaneGeometry(w, h); g.translate(0, h / 2, 0); g.rotateY(k * PI / 3); const n = g.attributes.normal; for (let i = 0; i < n.count; i++) n.setXYZ(i, 0, 1, 0); gs.push(g); } return mergeGeometries(gs); }
 
 // far = true: cerros y bosque lejano en 3D (hasta 2,6 km). far = false: sólo hasta ~620 m; lo demás lo pone el panorama precalculado
-export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = true }) {
+export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = true, drives = [] }) {
   const G = new THREE.Group(), R = rng(2024), fixtures = [], rockU = { value: T.rock.map }, tintU = { value: new THREE.Color(1, 1, 1) }; let terrainMat = null;
   const flatR = Math.max(hx, hz) + 10;
   const inHouse = (x, z, m) => Math.abs(x) < hx + m && Math.abs(z) < hz + m;
   const pathRect = entry ? (() => { const L = 9, w = 1.6; const x0 = entry.x - entry.nx * 0.6, z0 = entry.z - entry.nz * 0.6, x1 = entry.x - entry.nx * (L + 0.6), z1 = entry.z - entry.nz * (L + 0.6); return [Math.min(x0, x1) - (entry.nx ? 0 : w / 2), Math.max(x0, x1) + (entry.nx ? 0 : w / 2), Math.min(z0, z1) - (entry.nz ? 0 : w / 2), Math.max(z0, z1) + (entry.nz ? 0 : w / 2)]; })() : null;
-  const onPath = (x, z, m) => pathRect && x > pathRect[0] - m && x < pathRect[1] + m && z > pathRect[2] - m && z < pathRect[3] + m;
+  // entradas de coche (garajes): rectángulo de pavimento delante de cada portón
+  const driveRects = drives.map(d => { const L = d.len || 6.5, w = d.w + 0.8, x0 = d.x - d.nx * 0.12, z0 = d.z - d.nz * 0.12, x1 = d.x - d.nx * (L + 0.12), z1 = d.z - d.nz * (L + 0.12); return [Math.min(x0, x1) - (d.nx ? 0 : w / 2), Math.max(x0, x1) + (d.nx ? 0 : w / 2), Math.min(z0, z1) - (d.nz ? 0 : w / 2), Math.max(z0, z1) + (d.nz ? 0 : w / 2)]; });
+  const inRect = (r, x, z, m) => x > r[0] - m && x < r[1] + m && z > r[2] - m && z < r[3] + m;
+  const onPath = (x, z, m) => (pathRect && inRect(pathRect, x, z, m)) || driveRects.some(r => inRect(r, x, z, m));
   const gh = (x, z) => {
     const r = Math.hypot(x, z), t = smooth(flatR, flatR + 45, r);
     const und = (fbm(x * 0.015 + 7, z * 0.015 + 3, 3) - 0.5) * 5 * t;
@@ -147,6 +174,12 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
       fixtures.push({ pos: V(bx, 0.45, bz), kind: 'bollard', prio: k === 1 && sd === 1 ? 4 : 0, room: null });
     });
   }
+
+  driveRects.forEach(r => {
+    const w = r[1] - r[0], d = r[3] - r[2], g = new THREE.BoxGeometry(w, 0.36, d), uv = g.attributes.uv, p = g.attributes.position, cx = (r[0] + r[1]) / 2, cz = (r[2] + r[3]) / 2;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, p.getX(i) + cx, p.getZ(i) + cz);
+    const m = new THREE.Mesh(g, M.sidewalk); m.position.set(cx, -0.19, cz); m.receiveShadow = true; G.add(m);
+  });
 
   // — árboles cercanos —
   const kinds = [['lapacho', 6.2], ['broad', 7], ['palm', 0], ['lapachoY', 5.8], ['broad2', 6.5], ['palm', 0]];
@@ -207,7 +240,7 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
     vars.forEach(([geo, mat], vi) => {
       const list = spots.filter(s => s.v === vi); if (!list.length) return; const im = new THREE.InstancedMesh(geo, mat, list.length), m4 = new THREE.Matrix4();
       list.forEach((s, i) => { const sc = 0.8 + R() * 0.5; m4.compose(V(s.x, gh(s.x, s.z), s.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R() * 6.28, 0)), V(sc, sc * (0.8 + R() * 0.4), sc)); im.setMatrixAt(i, m4); });
-      im.castShadow = true; im.receiveShadow = true; G.add(im); shrubIMs.push(im);
+      clipify(mat); im.castShadow = true; im.receiveShadow = true; G.add(im); shrubIMs.push(im);
     });
   }
 
@@ -221,7 +254,7 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
         if (inHouse(x, z, 0.95) || onPath(x, z, 0.35)) continue; if (N(x * 0.2 + 3, z * 0.2) < 0.38) continue;
         const s = 0.6 + R() * 0.9; m4.compose(V(x, gh(x, z) - 0.02, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, R() * 6.28, 0)), V(s, s * (0.7 + R() * 0.6), s)); im.setMatrixAt(k++, m4); list.push({ x, z, r: Math.hypot(x, z), m: m4.clone() });
       }
-      im.count = k; im.receiveShadow = true; G.add(im); return { im, list };
+      clipify(mat); im.count = k; im.receiveShadow = true; G.add(im); return { im, list };
     };
     const rH = Math.max(hx, hz);
     tufts = place(tuftGeo(0.42, 0.34), M.tuft, low ? 1400 : 5200, rH * 0.6, rH + 34);
@@ -236,7 +269,7 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
     geo.computeVertexNormals(); const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 4, uv.getY(i) * 2);
     for (let i = 0, k = 0; i < 60 && k < 9; i++) {
       const a = R() * PI * 2, r = Math.max(hx, hz) + 3 + R() * 14, x = Math.cos(a) * r, z = Math.sin(a) * r; if (inHouse(x, z, 2) || onPath(x, z, 1)) continue;
-      const m = new THREE.Mesh(geo, M.rock), s = 0.25 + R() * 0.6; m.scale.set(s * (1 + R() * 0.6), s, s); m.position.set(x, gh(x, z) - s * 0.15, z); m.rotation.y = R() * 6; m.castShadow = m.receiveShadow = true; G.add(m); rocks.push({ m, x, z, s }); k++;
+      const m = new THREE.Mesh(geo, clipify(M.rock)), s = 0.25 + R() * 0.6; m.scale.set(s * (1 + R() * 0.6), s, s); m.position.set(x, gh(x, z) - s * 0.15, z); m.rotation.y = R() * 6; m.castShadow = m.receiveShadow = true; G.add(m); rocks.push({ m, x, z, s }); k++;
     }
   }
   void maxH;
@@ -260,7 +293,7 @@ export function buildExterior({ T, M, low, hx, hz, entry, camDir, maxH, far = tr
       return { out, size: box.getSize(V()), min: box.min.clone() };
     };
     // una InstancedMesh por pieza, con todas las posiciones
-    const instanced = (P, mats, shadow = true) => { if (!mats.length) return []; return P.out.map(pt => { const im = new THREE.InstancedMesh(pt.geo, pt.mat, mats.length); mats.forEach((M4, i) => im.setMatrixAt(i, m4.multiplyMatrices(M4, pt.rel))); im.castShadow = shadow; im.receiveShadow = true; G.add(im); return im; }); };
+    const instanced = (P, mats, shadow = true) => { if (!mats.length) return []; return P.out.map(pt => { const im = new THREE.InstancedMesh(pt.geo, Array.isArray(pt.mat) ? pt.mat.map(clipify) : clipify(pt.mat), mats.length); mats.forEach((M4, i) => im.setMatrixAt(i, m4.multiplyMatrices(M4, pt.rel))); im.castShadow = shadow; im.receiveShadow = true; G.add(im); return im; }); };
     const at = (x, y, z, ry, s, sy) => new THREE.Matrix4().compose(V(x, y, z), q.setFromEuler(e.set(0, ry, 0)), V(s, sy ?? s, s));
     const variantsOf = m => (m.meta.variants && m.meta.variants.length ? m.meta.variants : [null]);
 
