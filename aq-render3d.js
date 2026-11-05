@@ -469,7 +469,15 @@ export async function createViewer(el, input, cb = {}) {
     o.position.set(-c.x, meta.hang ? -box.max.y : -box.min.y, -c.z); o.updateMatrixWorld(true);
     // sólo proyectan sombra las piezas grandes (manillas, tornillos o cojines pequeños no se notan y cuestan una llamada de dibujo más)
     const ws = new THREE.Vector3(); o.traverse(m => { if (m.isMesh) { if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere(); m.getWorldScale(ws); const big = m.geometry.boundingSphere.radius * Math.max(ws.x, ws.y, ws.z) > 0.14; m.castShadow = big && !(m.material && m.material.userData && m.material.userData.glow); m.receiveShadow = true; } });
-    const g = new THREE.Group(); g.userData.model = true; g.add(o); g.updateMatrixWorld(true);
+    const g = new THREE.Group(); g.userData.model = true; g.add(o);
+    // calathea y anturio vienen sin maceta: parecían brotar del suelo (o confundirse con hierba del terreno). Se les pone una.
+    if (/calathea|anthurium/.test(L.id)) {
+      const r = Math.max(0.16, Math.min(0.26, Math.min(s.x, s.z) * 0.3)), ph = Math.max(0.3, Math.min(0.42, s.y * 0.38));
+      const pot = add(g, cyl(r, ph, 28, r * 0.78), M.ceramic, 0, 0, 0), rim = add(g, cyl(r + 0.012, 0.035, 28), M.ceramic, 0, ph - 0.035, 0), soil = add(g, cyl(r - 0.01, 0.01, 24), M.black, 0, ph - 0.03, 0);
+      pot.name = 'maceta'; [pot, rim].forEach(m => { m.castShadow = true; m.receiveShadow = true; }); soil.castShadow = false;
+      o.position.y += ph - 0.03; s.y += ph - 0.03; s.x = Math.max(s.x, 2 * r); s.z = Math.max(s.z, 2 * r);
+    }
+    g.updateMatrixWorld(true);
     const it = { g, w: s.x, d: s.z, h: s.y, model: true, meta, root: o };
     let lp = null; if (meta.light === 'node:light' || meta.light === undefined) { const n = o.getObjectByName('light'); if (n) lp = n.getWorldPosition(new THREE.Vector3()); } else if (Array.isArray(meta.light)) lp = new THREE.Vector3(...meta.light).applyMatrix4(o.matrixWorld);
     if (lp) { it.lx = lp.x; it.ly = lp.y; it.lz = lp.z; }
