@@ -109,6 +109,18 @@
           <button type="button" class="btn btn-secondary" onClick="{{ downloadPlan }}" style="min-height:44px;padding:0 16px;font-size:14px;white-space:nowrap">Descargar .json</button>
           <button type="button" class="btn btn-primary" onClick="{{ renderPlan }}" style="min-height:44px;padding:0 20px;font-size:15px;white-space:nowrap">Renderizar 3D</button>
         </div>
+        <div style="grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <span style="font-size:13px;font-weight:700;color:var(--color-neutral-700);margin-right:2px">Planta</span>
+          <div role="group" aria-label="Planta que estás editando" style="display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--color-neutral-200);overflow-x:auto;max-width:100%">
+            <sc-for list="{{ plOpts }}" as="t" hint-placeholder-count="1"><button type="button" aria-pressed="{{ t.on }}" data-k="{{ t.k }}" onClick="{{ setPlanta }}" style="flex:none;min-height:38px;padding:0 14px;border:0;border-radius:999px;background:{{ t.bg }};color:{{ t.fg }};font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap">{{ t.l }}</button></sc-for>
+          </div>
+          <sc-if value="{{ canAddPl }}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-ghost" onClick="{{ addPlanta }}" style="min-height:40px;padding:0 14px;font-size:14px;white-space:nowrap">+ Añadir planta</button></sc-if>
+          <sc-if value="{{ canDelPl }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost" onClick="{{ delPlanta }}" style="min-height:40px;padding:0 14px;font-size:14px;white-space:nowrap;color:var(--color-accent-800)">Borrar esta planta</button></sc-if>
+          <span style="font-size:13px;color:var(--color-neutral-600)">{{ plHint }}</span>
+        </div>
+        <sc-if value="{{ isStairTool }}" hint-placeholder-val="{{ false }}">
+          <p style="grid-column:1 / -1;margin:0;font-size:14px;line-height:1.5;color:var(--color-neutral-800)">Dibuja la escalera donde quieras dentro de una estancia de esta planta (mínimo 0,8 m de ancho y 2 m de largo; lo cómodo son unos 4 m). Sube a la planta de arriba, que tendrá un hueco con barandilla en ese sitio. Después eliges hacia dónde sube.</p>
+        </sc-if>
         <sc-if value="{{ isDraw }}" hint-placeholder-val="{{ true }}">
           <div style="grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
             <span style="font-size:13px;font-weight:700;color:var(--color-neutral-700);margin-right:4px">Tipo de la nueva estancia</span>
@@ -120,6 +132,7 @@
             <defs><pattern id="aqgrid" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="var(--color-neutral-300)" stroke-width="0.02"></path></pattern></defs>
             <rect x="-1" y="-1" width="200" height="200" fill="url(#aqgrid)"></rect>
             <sc-if value="{{ hasUnder }}" hint-placeholder-val="{{ false }}"><image ref="{{ underRef }}" x="0" y="0" width="{{ underW }}" height="{{ underH }}" opacity="0.45" preserveAspectRatio="none" style="pointer-events:none"></image></sc-if>
+            <sc-for list="{{ edGhost }}" as="r" hint-placeholder-count="0"><rect x="{{ r.x }}" y="{{ r.y }}" width="{{ r.w }}" height="{{ r.d }}" fill="none" stroke="var(--color-neutral-500)" stroke-width="0.05" stroke-dasharray="0.25 0.15" style="pointer-events:none"></rect></sc-for>
             <sc-for list="{{ edRooms }}" as="r" hint-placeholder-count="6">
               <rect data-rid="{{ r.id }}" x="{{ r.x }}" y="{{ r.y }}" width="{{ r.w }}" height="{{ r.d }}" fill="{{ r.fill }}" stroke="{{ r.stroke }}" stroke-width="0.08" stroke-dasharray="{{ r.dash }}"></rect>
             </sc-for>
@@ -128,6 +141,11 @@
             <sc-for list="{{ edRooms }}" as="r" hint-placeholder-count="0">
               <text x="{{ r.lx }}" y="{{ r.ly }}" text-anchor="middle" font-size="{{ r.fs }}" font-weight="700" fill="var(--color-neutral-900)" style="pointer-events:none">{{ r.name }}</text>
               <text x="{{ r.lx }}" y="{{ r.l2 }}" text-anchor="middle" font-size="{{ r.fs2 }}" fill="var(--color-neutral-700)" style="pointer-events:none">{{ r.dims }}</text>
+            </sc-for>
+            <sc-for list="{{ edStairs }}" as="t" hint-placeholder-count="0">
+              <rect data-sid="{{ t.sid }}" x="{{ t.x }}" y="{{ t.y }}" width="{{ t.w }}" height="{{ t.d }}" fill="{{ t.fill }}" fill-opacity="{{ t.op }}" stroke="{{ t.stroke }}" stroke-width="0.07" stroke-dasharray="{{ t.dash }}" style="pointer-events:{{ t.pe }}"></rect>
+              <path d="{{ t.steps }}" stroke="var(--color-neutral-800)" stroke-width="0.025" fill="none" style="pointer-events:none"></path>
+              <text x="{{ t.lx }}" y="{{ t.ly }}" text-anchor="middle" font-size="{{ t.fs }}" font-weight="800" fill="var(--color-neutral-900)" style="pointer-events:none">{{ t.label }}</text>
             </sc-for>
             <sc-if value="{{ hasDraft }}" hint-placeholder-val="{{ false }}"><rect x="{{ draft.x }}" y="{{ draft.y }}" width="{{ draft.w }}" height="{{ draft.d }}" fill="var(--color-accent-200)" fill-opacity="0.6" stroke="var(--color-accent)" stroke-width="0.06" stroke-dasharray="0.2 0.12" style="pointer-events:none"></rect><text x="{{ draft.lx }}" y="{{ draft.ly }}" text-anchor="middle" font-size="0.4" font-weight="700" fill="var(--color-accent-800)" style="pointer-events:none">{{ draft.dims }}</text></sc-if>
             <sc-if value="{{ hasHandle }}" hint-placeholder-val="{{ false }}"><circle data-h="1" cx="{{ handle.x }}" cy="{{ handle.y }}" r="0.28" fill="var(--color-accent)" stroke="#fff" stroke-width="0.06" style="cursor:nwse-resize"></circle></sc-if>
@@ -147,12 +165,44 @@
               </div>
               <label style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">Altura propia de esta estancia (m)<input type="number" class="input" data-f="altura" min="2.2" max="9" step="0.05" value="{{ selR.altura }}" placeholder="{{ altoPh }}" onChange="{{ onField }}"><span style="font-size:13px;font-weight:600;color:var(--color-neutral-600)">Déjalo vacío para usar la altura general.</span></label>
               <label style="display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;font-weight:700;cursor:pointer"><input type="checkbox" data-f="dobleAltura" checked="{{ selR.dbl }}" onChange="{{ onField }}" style="width:20px;height:20px;accent-color:var(--color-accent)">Doble altura ({{ dblL }})</label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">Suelo de esta estancia<select class="input" data-f="suelo" value="{{ selR.suelo }}" onChange="{{ onField }}"><sc-for list="{{ sueloOpts }}" as="o" hint-placeholder-count="9"><option value="{{ o.k }}">{{ o.l }}</option></sc-for></select></label>
+              <div style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">Color de paredes de esta estancia
+                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                  <button type="button" data-c="" onClick="{{ setRoomColor }}" aria-pressed="{{ selR.cDef }}" style="min-height:32px;padding:0 10px;border-radius:999px;border:2px solid {{ selR.cDefBd }};background:var(--color-bg);font:inherit;font-size:12px;font-weight:700;cursor:pointer">Como la casa</button>
+                  <sc-for list="{{ selR.colors }}" as="c" hint-placeholder-count="8"><button type="button" data-c="{{ c.k }}" onClick="{{ setRoomColor }}" aria-label="{{ c.l }}" title="{{ c.l }}" aria-pressed="{{ c.on }}" style="width:30px;height:30px;border-radius:50%;background:{{ c.k }};border:3px solid {{ c.bd }};cursor:pointer"></button></sc-for>
+                  <input type="color" value="{{ selR.cPick }}" onChange="{{ onRoomColorPick }}" aria-label="Otro color" title="Otro color" style="width:36px;height:32px;padding:0;border:0;background:none;cursor:pointer">
+                </div>
+              </div>
               <button type="button" class="btn btn-ghost" onClick="{{ delSel }}" style="min-height:44px;font-size:14px;align-self:flex-start;color:var(--color-accent-800);white-space:nowrap">Eliminar estancia</button>
             </div>
           </sc-if>
-          <sc-if value="{{ noSel }}" hint-placeholder-val="{{ true }}">
-            <p style="margin:0;font-size:15px;line-height:1.55;color:var(--color-neutral-800)">Arrastra sobre la cuadrícula para dibujar una estancia (cada cuadro es 1 m). Con «Mover» seleccionas, desplazas y estiras desde el punto naranja. Los muros, puertas y ventanas se colocan solos.</p>
+          <sc-if value="{{ hasSelS }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <span style="font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-600)">Escalera seleccionada</span>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">Sube hacia<select class="input" data-f="sube" value="{{ selS.sube }}" onChange="{{ onStairField }}"><option value="N">Arriba del plano (norte)</option><option value="S">Abajo del plano (sur)</option><option value="E">Derecha (este)</option><option value="O">Izquierda (oeste)</option></select></label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">Ancho (m)<input type="number" class="input" data-f="ancho" min="0.8" max="12" step="0.05" value="{{ selS.ancho }}" onChange="{{ onStairField }}"></label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">Fondo (m)<input type="number" class="input" data-f="fondo" min="0.8" max="12" step="0.05" value="{{ selS.fondo }}" onChange="{{ onStairField }}"></label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">X (m)<input type="number" class="input" data-f="x" min="0" step="0.05" value="{{ selS.x }}" onChange="{{ onStairField }}"></label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">Y (m)<input type="number" class="input" data-f="y" min="0" step="0.05" value="{{ selS.y }}" onChange="{{ onStairField }}"></label>
+              </div>
+              <span style="font-size:13px;line-height:1.45;color:var(--color-neutral-700)">{{ selS.info }}</span>
+              <button type="button" class="btn btn-ghost" onClick="{{ delSelS }}" style="min-height:44px;font-size:14px;align-self:flex-start;color:var(--color-accent-800);white-space:nowrap">Eliminar escalera</button>
+            </div>
           </sc-if>
+          <sc-if value="{{ noSel }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:0;font-size:15px;line-height:1.55;color:var(--color-neutral-800)">Arrastra sobre la cuadrícula para dibujar una estancia (cada cuadro es 1 m). Con «Mover» seleccionas, desplazas y estiras desde el punto naranja. Los muros, puertas y ventanas se colocan solos. Para una casa de varios pisos, añade una planta arriba y dibuja la escalera con la herramienta «Escalera»; las estancias de la planta de abajo se ven punteadas para alinear.</p>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--color-divider)">
+            <span style="font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-600)">Acabados de toda la casa</span>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">Suelo de salón, comedor, dormitorios y pasillos<select class="input" value="{{ gSuelo }}" onChange="{{ onGSuelo }}"><sc-for list="{{ sueloOpts }}" as="o" hint-placeholder-count="9"><option value="{{ o.k }}">{{ o.l }}</option></sc-for></select></label>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700">Color de las paredes interiores
+              <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                <sc-for list="{{ gColors }}" as="c" hint-placeholder-count="8"><button type="button" data-c="{{ c.k }}" onClick="{{ setGColor }}" aria-label="{{ c.l }}" title="{{ c.l }}" aria-pressed="{{ c.on }}" style="width:30px;height:30px;border-radius:50%;background:{{ c.k }};border:3px solid {{ c.bd }};cursor:pointer"></button></sc-for>
+                <input type="color" value="{{ gPick }}" onChange="{{ onGColorPick }}" aria-label="Otro color" title="Otro color" style="width:36px;height:32px;padding:0;border:0;background:none;cursor:pointer">
+              </div>
+            </div>
+          </div>
           <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:14px;border-top:1px solid var(--color-divider)">
             <div><dt style="font-size:13px;color:var(--color-neutral-700)">Superficie útil</dt><dd style="margin:2px 0 0;font-family:var(--font-heading);font-size:24px">{{ sumArea }}</dd></div>
             <div><dt style="font-size:13px;color:var(--color-neutral-700)">Estancias</dt><dd style="margin:2px 0 0;font-family:var(--font-heading);font-size:24px">{{ sumN }}</dd></div>
@@ -210,9 +260,12 @@
             <h2 style="font-family:var(--font-heading);font-weight:400;font-size:26px;margin:0 0 16px">Reglas del plano</h2>
             <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:1.55">
               <li>Medidas en metros. El origen (0, 0) es la esquina superior izquierda; x crece a la derecha e y hacia abajo.</li>
-              <li>Una planta por archivo. Estancias rectangulares: una estancia en L se divide en dos rectángulos.</li>
+              <li>Estancias rectangulares: una estancia en L se divide en dos rectángulos. Cada estancia puede llevar "planta" (0 = planta baja, 1 = primera… hasta 4 plantas).</li>
+              <li>Escaleras en "escaleras": x, y, ancho, fondo, la planta donde empieza y "sube" hacia N, S, E u O. Llevan a la planta de arriba, que tiene un hueco con barandilla en ese sitio.</li>
+              <li>Tipo "garaje": lleva portón seccional en su muro exterior más largo (mínimo 2,6 m) y entrada de coche pavimentada.</li>
+              <li>Acabados opcionales por estancia: "suelo" (madera, parquet, roble, porcelanato, marmol, terrazo, cemento, terracota) y "colorPared" (#rrggbb). Los mismos campos en la raíz valen para toda la casa.</li>
               <li>Cada estancia lleva id, nombre, tipo, x, y, ancho y fondo. Mínimo 1,2 × 1,2 m y sin solapes.</li>
-              <li>Tipos: salon, comedor, cocina, dormitorio, bano, estudio, pasillo, recibidor, lavadero y terraza.</li>
+              <li>Tipos: salon, comedor, cocina, dormitorio, bano, estudio, pasillo, recibidor, lavadero, terraza y garaje.</li>
               <li>"alturaLibre": altura de suelo a techo para toda la casa, 2,70 m por defecto (entre 2,20 y 4,50). Cada estancia puede llevar su propia "altura" (hasta 9 m). Con "dobleAltura": true la estancia sube al doble de la altura libre. En el visor 3D también se cambia en vivo desde Ajustes.</li>
               <li>Muros automáticos sobre los bordes: 24 cm en fachada y 12 cm entre estancias.</li>
               <li>Puertas de 80–90 × 210 cm y ventanas según el uso. Salón, comedor y cocina contiguos quedan abiertos entre sí.</li>
@@ -230,10 +283,17 @@
   "alturaLibre": 2.7,
   "estancias": [
     { "id": "salon", "nombre": "Salón", "tipo": "salon",
-      "x": 3, "y": 5.5, "ancho": 6, "fondo": 5.5,
-      "dobleAltura": true },
+      "x": 3, "y": 5.5, "ancho": 6, "fondo": 5.5 },
     { "id": "cocina", "nombre": "Cocina", "tipo": "cocina",
-      "x": 9, "y": 5.5, "ancho": 5, "fondo": 2.75 }
+      "x": 9, "y": 5.5, "ancho": 5, "fondo": 2.75,
+      "suelo": "porcelanato" },
+    { "id": "dorm1", "nombre": "Dormitorio", "tipo": "dormitorio",
+      "planta": 1, "x": 3, "y": 5.5, "ancho": 6, "fondo": 5.5,
+      "colorPared": "#c9cfc0" }
+  ],
+  "escaleras": [
+    { "planta": 0, "x": 3.3, "y": 9.6, "ancho": 4.2,
+      "fondo": 1, "sube": "E" }
   ]
 }</pre>
           <button type="button" class="btn btn-primary" onClick="{{ downloadTemplate }}" style="min-height:48px;padding:0 22px;font-size:15px;align-self:flex-start;white-space:nowrap">Descargar plantilla .json</button>
@@ -254,7 +314,7 @@
             <sc-for list="{{ modes }}" as="m" hint-placeholder-count="3"><button type="button" aria-pressed="{{ m.on }}" data-k="{{ m.k }}" onClick="{{ setMode }}" style="min-height:40px;padding:0 14px;border:0;border-radius:999px;background:{{ m.bg }};color:{{ m.fg }};font:inherit;font-size:14px;font-weight:700;cursor:pointer">{{ m.l }}</button></sc-for>
           </div>
           <sc-if value="{{ hasRooms }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ toggleTour }}" class="btn btn-primary" style="pointer-events:auto;min-height:48px;padding:0 18px;font-size:14px;white-space:nowrap">{{ tourLabel }}</button></sc-if>
-          <button type="button" onClick="{{ togglePanel }}" aria-pressed="{{ panelOn }}" aria-label="Ajustes de la escena" title="Hora, luces, techo, puertas y fachada" style="pointer-events:auto;min-height:48px;padding:0 16px;border-radius:999px;border:0;background:{{ panelBg }};color:{{ panelFg }};display:flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"></path><circle cx="16" cy="6" r="2"></circle><circle cx="10" cy="12" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>Ajustes</button>
+          <button type="button" onClick="{{ togglePanel }}" aria-pressed="{{ panelOn }}" aria-label="Ajustes de la escena" title="Hora, luces, techo, puertas, fachada, muebles, plantas, paredes y suelo" style="pointer-events:auto;min-height:48px;padding:0 16px;border-radius:999px;border:0;background:{{ panelBg }};color:{{ panelFg }};display:flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"></path><circle cx="16" cy="6" r="2"></circle><circle cx="10" cy="12" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>Ajustes</button>
           <button type="button" onClick="{{ photo }}" aria-label="Descargar foto de la vista" title="Foto" style="pointer-events:auto;width:48px;height:48px;border-radius:999px;border:0;background:var(--color-neutral-100);color:var(--color-neutral-900);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg></button>
         </sc-if>
       </div>
@@ -273,6 +333,16 @@
                   <span style="display:flex;align-items:center;gap:8px">Fachada<span role="group" aria-label="Acabado de la fachada" style="display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.14)"><sc-for list="{{ facadeOpts }}" as="o" hint-placeholder-count="3"><button type="button" aria-pressed="{{ o.on }}" data-k="{{ o.k }}" onClick="{{ setFacade }}" style="min-height:32px;padding:0 11px;border:0;border-radius:999px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:12px;cursor:pointer">{{ o.l }}</button></sc-for></span></span>
                   <sc-if value="{{ hasDoors }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ toggleDoors }}" style="min-height:34px;padding:0 13px;border:0;border-radius:999px;background:rgba(255,255,255,.9);color:#1f1c19;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap">{{ doorsLabel }}</button></sc-if>
                 </div>
+                <sc-if value="{{ hasRooms }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center">
+                    <span style="display:flex;align-items:center;gap:8px">Muebles<span role="group" aria-label="Muebles y decoración" style="display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.14)"><sc-for list="{{ furnOpts }}" as="o" hint-placeholder-count="2"><button type="button" aria-pressed="{{ o.on }}" data-k="{{ o.k }}" onClick="{{ setFurn }}" style="min-height:32px;padding:0 11px;border:0;border-radius:999px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:12px;cursor:pointer">{{ o.l }}</button></sc-for></span></span>
+                    <sc-if value="{{ multiLevel }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:8px">Ver<span role="group" aria-label="Plantas visibles en la maqueta" style="display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.14)"><sc-for list="{{ levelOpts }}" as="o" hint-placeholder-count="3"><button type="button" aria-pressed="{{ o.on }}" data-k="{{ o.k }}" onClick="{{ setLevel }}" style="min-height:32px;padding:0 11px;border:0;border-radius:999px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:12px;cursor:pointer;white-space:nowrap">{{ o.l }}</button></sc-for></span></span></sc-if>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center">
+                    <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">Paredes<sc-for list="{{ wallOpts }}" as="c" hint-placeholder-count="8"><button type="button" data-c="{{ c.k }}" onClick="{{ setWall }}" aria-label="{{ c.l }}" title="{{ c.l }}" aria-pressed="{{ c.on }}" style="width:24px;height:24px;border-radius:50%;background:{{ c.k }};border:2px solid {{ c.bd }};cursor:pointer;padding:0"></button></sc-for><input type="color" value="{{ wallPick }}" onChange="{{ onWallPick }}" aria-label="Otro color de pared" title="Otro color" style="width:30px;height:26px;padding:0;border:0;background:none;cursor:pointer"></span>
+                    <label style="display:flex;align-items:center;gap:8px">Suelo<select value="{{ vFloor }}" onChange="{{ onFloor }}" aria-label="Tipo de suelo de salón, comedor, dormitorios y pasillos" style="min-height:32px;border-radius:999px;border:0;padding:0 10px;background:rgba(255,255,255,.9);color:#1f1c19;font:inherit;font-size:12px"><sc-for list="{{ floorOpts }}" as="o" hint-placeholder-count="9"><option value="{{ o.k }}">{{ o.l }}</option></sc-for></select></label>
+                  </div>
+                </sc-if>
               </div>
             </sc-if>
             <span style="font-size:13px;line-height:1.4;text-shadow:0 1px 4px rgba(0,0,0,.7);color:var(--color-neutral-100)">{{ hint }}</span>
@@ -320,18 +390,19 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;pestanaInicial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;subir&quot;,&quot;crear&quot;,&quot;plantillas&quot;,&quot;estandares&quot;],&quot;default&quot;:&quot;subir&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;minimapa&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
 class Component extends DCLogic {
-  state = { tab: 'subir', rooms: [], nombre: 'Mi casa', alto: 2.7, panel: !(typeof matchMedia !== 'undefined' && matchMedia('(pointer:coarse)').matches), sel: null, tool: 'draw', newType: 'dormitorio', draft: null, up: null, under: null, underW: 12, drop: false, v: null, ready: false };
+  state = { tab: 'subir', rooms: [], nombre: 'Mi casa', alto: 2.7, panel: !(typeof matchMedia !== 'undefined' && matchMedia('(pointer:coarse)').matches), sel: null, selS: null, planta: 0, nPl: 1, stairs: [], suelo: 'auto', colorPared: '', tool: 'draw', newType: 'dormitorio', draft: null, up: null, under: null, underW: 12, drop: false, v: null, ready: false };
   svgRef = React.createRef(); underRef = React.createRef(); stageRef = React.createRef(); mmRef = React.createRef();
-  STEPS = ['Leyendo el plano', 'Terreno y cielo', 'Levantando muros', 'Puertas y ventanas', 'Suelos y techos', 'Muebles 3D', 'Amueblando', 'Luces y sombras'];
+  STEPS = ['Leyendo el plano', 'Texturas', 'Muebles 3D', 'Terreno y vegetación', 'Levantando la casa', 'Amueblando', 'Preparando gráficos', 'Construcción'];
   coarse = typeof matchMedia !== 'undefined' && matchMedia('(pointer:coarse)').matches;
 
   componentDidMount() {
     const start = this.props.pestanaInicial; if (start && start !== 'subir') this.setState({ tab: start });
-    import(new URL('aq-plan.js', document.baseURI).href).then(m => {
+    import(new URL('aq-plan.js?v=20261105c', document.baseURI).href).then(m => {
       this.P = m; let saved = null;
       try { saved = JSON.parse(localStorage.getItem('aq_r3d_plan') || 'null'); } catch (e) {}
       const t = m.PLANTILLAS[0], ok = saved && Array.isArray(saved.rooms) && saved.rooms.length;
-      this.setState({ ready: true, rooms: ok ? saved.rooms : t.estancias.map(e => Object.assign({}, e)), nombre: (ok && saved.nombre) || t.nombre, alto: (ok && +saved.alto) || 2.7 });
+      const rooms = ok ? saved.rooms : t.estancias.map(e => Object.assign({}, e)), stairs = ok && Array.isArray(saved.stairs) ? saved.stairs : [];
+      this.setState({ ready: true, rooms, stairs, nombre: (ok && saved.nombre) || t.nombre, alto: (ok && +saved.alto) || 2.7, suelo: (ok && saved.suelo) || 'auto', colorPared: (ok && saved.colorPared) || '', nPl: Math.max((ok && +saved.nPl) || 1, ...rooms.map(r => (r.planta || 0) + 1)) });
     }).catch(e => console.error(e));
     this.onHash = () => { const k = location.hash.slice(1); if (['subir', 'crear', 'plantillas', 'estandares'].includes(k)) this.setState({ tab: k }); };
     this.onHash(); addEventListener('hashchange', this.onHash);
@@ -343,7 +414,10 @@ class Component extends DCLogic {
 
   fmt = v => String(Math.round(v * 100) / 100).replace('.', ',');
   snap = v => Math.round(v * 4) / 4;
-  save = () => { try { localStorage.setItem('aq_r3d_plan', JSON.stringify({ nombre: this.state.nombre, rooms: this.state.rooms, alto: this.state.alto })); } catch (e) {} };
+  save = () => { const s = this.state; try { localStorage.setItem('aq_r3d_plan', JSON.stringify({ nombre: s.nombre, rooms: s.rooms, alto: s.alto, stairs: s.stairs, suelo: s.suelo, colorPared: s.colorPared, nPl: s.nPl })); } catch (e) {} };
+  setStairs = (fn, extra) => this.setState(s => Object.assign({ stairs: fn(s.stairs) }, extra || {}), this.save);
+  updStair = (id, o) => this.setStairs(ss => ss.map(t => t.id === id ? Object.assign({}, t, o) : t));
+  fileOf = () => this.P.toFile(this.state.nombre, this.state.rooms, this.state.alto, this.state.stairs, { suelo: this.state.suelo, colorPared: this.state.colorPared });
   setRooms = (fn, extra) => this.setState(s => Object.assign({ rooms: fn(s.rooms) }, extra || {}), this.save);
   updRoom = (id, o) => this.setRooms(rs => rs.map(r => r.id === id ? Object.assign({}, r, o) : r));
   toW = e => { const svg = this.svgRef.current, pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
@@ -351,18 +425,34 @@ class Component extends DCLogic {
 
   setTab = e => { const k = e.currentTarget.getAttribute('data-k'); history.replaceState(null, '', '#' + k); this.setState({ tab: k }); };
   setTool = e => this.setState({ tool: e.currentTarget.getAttribute('data-k'), draft: null });
+  setPlanta = e => this.setState({ planta: +e.currentTarget.getAttribute('data-k'), sel: null, selS: null, draft: null });
+  addPlanta = () => this.setState(s => ({ nPl: Math.min(4, s.nPl + 1), planta: Math.min(3, s.nPl), sel: null, selS: null, tool: 'draw' }), this.save);
+  delPlanta = () => { const k = this.state.planta; if (!k) return; this.setState(s => ({ rooms: s.rooms.filter(r => (r.planta || 0) !== k), stairs: s.stairs.filter(t => (t.planta || 0) !== k && (t.planta || 0) !== k - 1), nPl: Math.max(1, s.nPl - 1), planta: k - 1, sel: null, selS: null }), this.save); };
+  onGSuelo = e => this.setState({ suelo: e.target.value }, this.save);
+  setGColor = e => this.setState({ colorPared: e.currentTarget.getAttribute('data-c') }, this.save);
+  onGColorPick = e => this.setState({ colorPared: String(e.target.value).toLowerCase() }, this.save);
+  setRoomColor = e => { if (this.state.sel) this.updRoom(this.state.sel, { colorPared: e.currentTarget.getAttribute('data-c') || '' }); };
+  onRoomColorPick = e => { if (this.state.sel) this.updRoom(this.state.sel, { colorPared: String(e.target.value).toLowerCase() }); };
+  onStairField = e => {
+    const f = e.target.getAttribute('data-f'), id = this.state.selS; if (!id) return; let v = e.target.value;
+    if (f !== 'sube') { v = parseFloat(String(v).replace(',', '.')); if (!Number.isFinite(v)) return; v = Math.max(f === 'x' || f === 'y' ? 0 : 0.8, Math.min(60, v)); }
+    this.updStair(id, { [f]: v });
+  };
+  delSelS = () => { const id = this.state.selS; this.setStairs(ss => ss.filter(t => t.id !== id), { selS: null }); };
   setNewType = e => this.setState({ newType: e.currentTarget.getAttribute('data-k') });
   onNombre = e => this.setState({ nombre: String(e.target.value).slice(0, 60) }, this.save);
   onAlto = e => { const v = parseFloat(String(e.target.value).replace(',', '.')); if (Number.isFinite(v)) this.setState({ alto: Math.max(2.2, Math.min(4.5, v)) }, this.save); };
 
   edDown = e => {
     const svg = this.svgRef.current; if (!svg || !this.P) return;
-    const p = this.toW(e), t = e.target, rid = t.getAttribute && t.getAttribute('data-rid'), hd = t.getAttribute && t.getAttribute('data-h'), tool = this.state.tool;
-    if (tool === 'erase') { if (rid) this.setRooms(rs => rs.filter(r => r.id !== rid), { sel: null }); return; }
-    if (hd && this.state.sel) this.drag = { kind: 'resize', id: this.state.sel };
-    else if (tool === 'move' && rid) { const r = this.state.rooms.find(r => r.id === rid); this.drag = { kind: 'move', id: rid, dx: p.x - r.x, dy: p.y - r.y }; this.setState({ sel: rid }); }
-    else if (tool === 'draw') { const x = this.snap(p.x), y = this.snap(p.y); this.drag = { kind: 'draw', x0: x, y0: y, rid }; this.setState({ draft: { x, y, w: 0, d: 0 } }); }
-    else this.setState({ sel: rid || null });
+    const p = this.toW(e), t = e.target, rid = t.getAttribute && t.getAttribute('data-rid'), sid = t.getAttribute && t.getAttribute('data-sid'), hd = t.getAttribute && t.getAttribute('data-h'), tool = this.state.tool;
+    if (tool === 'erase') { if (sid) this.setStairs(ss => ss.filter(q => q.id !== sid), { selS: null }); else if (rid) this.setRooms(rs => rs.filter(r => r.id !== rid), { sel: null }); return; }
+    if (hd && this.state.selS) this.drag = { kind: 'resizeS', id: this.state.selS };
+    else if (hd && this.state.sel) this.drag = { kind: 'resize', id: this.state.sel };
+    else if (sid && tool !== 'draw' && tool !== 'stair') { const q = this.state.stairs.find(q => q.id === sid); this.drag = tool === 'move' ? { kind: 'moveS', id: sid, dx: p.x - q.x, dy: p.y - q.y } : null; this.setState({ selS: sid, sel: null }); }
+    else if (tool === 'move' && rid) { const r = this.state.rooms.find(r => r.id === rid); this.drag = { kind: 'move', id: rid, dx: p.x - r.x, dy: p.y - r.y }; this.setState({ sel: rid, selS: null }); }
+    else if (tool === 'draw' || tool === 'stair') { const x = this.snap(p.x), y = this.snap(p.y); this.drag = { kind: 'draw', x0: x, y0: y, rid, sid }; this.setState({ draft: { x, y, w: 0, d: 0 } }); }
+    else this.setState({ sel: rid || null, selS: null });
     try { svg.setPointerCapture(e.pointerId); } catch (er) {}
   };
   edMove = e => {
@@ -370,14 +460,22 @@ class Component extends DCLogic {
     if (D.kind === 'draw') { const x1 = this.snap(p.x), y1 = this.snap(p.y); this.setState({ draft: { x: Math.max(0, Math.min(D.x0, x1)), y: Math.max(0, Math.min(D.y0, y1)), w: Math.abs(x1 - D.x0), d: Math.abs(y1 - D.y0) } }); }
     else if (D.kind === 'move') this.updRoom(D.id, { x: Math.max(0, this.snap(p.x - D.dx)), y: Math.max(0, this.snap(p.y - D.dy)) });
     else if (D.kind === 'resize') { const r = this.state.rooms.find(r => r.id === D.id); if (r) this.updRoom(D.id, { ancho: Math.max(1.25, this.snap(p.x - r.x)), fondo: Math.max(1.25, this.snap(p.y - r.y)) }); }
+    else if (D.kind === 'moveS') this.updStair(D.id, { x: Math.max(0, this.snap(p.x - D.dx)), y: Math.max(0, this.snap(p.y - D.dy)) });
+    else if (D.kind === 'resizeS') { const q = this.state.stairs.find(q => q.id === D.id); if (q) this.updStair(D.id, { ancho: Math.max(0.8, this.snap(p.x - q.x)), fondo: Math.max(0.8, this.snap(p.y - q.y)) }); }
   };
   edUp = () => {
     const D = this.drag; this.drag = null; if (!D || D.kind !== 'draw') return;
     const d = this.state.draft; this.setState({ draft: null });
+    if (this.state.tool === 'stair') {
+      if (d && Math.min(d.w, d.d) >= 0.75 && Math.max(d.w, d.d) >= 2) { const id = 'esc' + Date.now().toString(36); this.setStairs(ss => ss.concat([{ id, planta: this.state.planta, x: d.x, y: d.y, ancho: d.w, fondo: d.d, sube: d.w >= d.d ? 'E' : 'S' }]), { selS: id, sel: null }); }
+      else if (D.sid) this.setState({ selS: D.sid, sel: null });
+      return;
+    }
     if (d && d.w >= 1.25 && d.d >= 1.25) {
-      const t = this.state.newType, n = this.state.rooms.filter(r => r.tipo === t).length + 1, L = this.P.TIPOS[t].l, id = this.newId();
-      this.setRooms(rs => rs.concat([{ id, nombre: n > 1 ? L + ' ' + n : L, tipo: t, x: d.x, y: d.y, ancho: d.w, fondo: d.d, dobleAltura: false }]), { sel: id });
-    } else if (D.rid) this.setState({ sel: D.rid });
+      const t = this.state.newType, n = this.state.rooms.filter(r => r.tipo === t).length + 1, L = this.P.TIPOS[t].l, id = this.newId(), pl = this.state.planta;
+      this.setRooms(rs => rs.concat([Object.assign({ id, nombre: n > 1 ? L + ' ' + n : L, tipo: t, x: d.x, y: d.y, ancho: d.w, fondo: d.d, dobleAltura: false }, pl ? { planta: pl } : {})]), { sel: id, selS: null });
+    } else if (D.sid) this.setState({ selS: D.sid, sel: null });
+    else if (D.rid) this.setState({ sel: D.rid, selS: null });
   };
   onField = e => {
     const f = e.target.getAttribute('data-f'), id = this.state.sel; if (!id) return;
@@ -387,10 +485,10 @@ class Component extends DCLogic {
     this.updRoom(id, { [f]: v });
   };
   delSel = () => { const id = this.state.sel; this.setRooms(rs => rs.filter(r => r.id !== id), { sel: null }); };
-  clearPlan = () => this.setRooms(() => [], { sel: null, nombre: 'Mi casa' });
+  clearPlan = () => this.setRooms(() => [], { sel: null, selS: null, stairs: [], nPl: 1, planta: 0, nombre: 'Mi casa' });
   dl = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
-  downloadPlan = () => { if (!this.P) return; const f = this.P.toFile(this.state.nombre, this.state.rooms, this.state.alto); this.dl((this.state.nombre || 'plano').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.aqplano.json', JSON.stringify(f, null, 2), 'application/json'); };
-  downloadTemplate = () => { if (!this.P) return; const t = this.P.PLANTILLAS[0]; this.dl('plantilla.aqplano.json', JSON.stringify(this.P.toFile(t.nombre, t.estancias), null, 2), 'application/json'); };
+  downloadPlan = () => { if (!this.P) return; const f = this.fileOf(); this.dl((this.state.nombre || 'plano').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.aqplano.json', JSON.stringify(f, null, 2), 'application/json'); };
+  downloadTemplate = () => { if (!this.P) return; const t = this.P.PLANTILLAS[0]; this.dl('plantilla.aqplano.json', JSON.stringify(this.P.toFile(t.nombre, t.estancias, 2.7, t.escaleras), null, 2), 'application/json'); };
 
   setUp = up => this.setState({ up });
   onFile = e => { const f = e.target.files && e.target.files[0]; if (f) this.readFile(f); e.target.value = ''; };
@@ -405,9 +503,10 @@ class Component extends DCLogic {
         const r = P.normalize(t); let raw = null; try { raw = JSON.parse(t); } catch (e) {}
         if (raw && Array.isArray(raw.estancias)) {
           const tip = v => { const k = String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); return P.TIPOS[k] ? k : 'salon'; };
-          const rooms = raw.estancias.slice(0, 40).map((e, i) => Object.assign({ id: String((e && e.id) || 'e' + (i + 1)), nombre: String((e && e.nombre) || ''), tipo: tip(e && e.tipo), x: +(e && e.x) || 0, y: +(e && e.y) || 0, ancho: +(e && (e.ancho ?? e.w)) || 1.2, fondo: +(e && (e.fondo ?? e.d)) || 1.2, dobleAltura: !!(e && e.dobleAltura) }, e && +e.altura > 0 ? { altura: +e.altura } : {}));
+          const rooms = raw.estancias.slice(0, 40).map((e, i) => Object.assign({ id: String((e && e.id) || 'e' + (i + 1)), nombre: String((e && e.nombre) || ''), tipo: tip(e && e.tipo), x: +(e && e.x) || 0, y: +(e && e.y) || 0, ancho: +(e && (e.ancho ?? e.w)) || 1.2, fondo: +(e && (e.fondo ?? e.d)) || 1.2, dobleAltura: !!(e && e.dobleAltura) }, e && +e.altura > 0 ? { altura: +e.altura } : {}, e && +e.planta > 0 ? { planta: Math.min(3, Math.round(+e.planta)) } : {}, e && e.suelo ? { suelo: String(e.suelo) } : {}, e && e.colorPared ? { colorPared: String(e.colorPared) } : {}));
+          const stairs = (Array.isArray(raw.escaleras) ? raw.escaleras : []).slice(0, 8).map((q, i) => ({ id: String((q && q.id) || 'esc' + (i + 1)), planta: Math.max(0, Math.round(+(q && q.planta) || 0)), x: +(q && q.x) || 0, y: +(q && q.y) || 0, ancho: +(q && (q.ancho ?? q.w)) || 1, fondo: +(q && (q.fondo ?? q.d)) || 3, sube: String((q && q.sube) || 'E').toUpperCase() }));
           const al = parseFloat(String(raw.alturaLibre ?? '').replace(',', '.'));
-          this.setState({ rooms, nombre: String(raw.nombre || f.name.replace(/\.json$/i, '')).slice(0, 60), sel: null, alto: Number.isFinite(al) ? Math.max(2.2, Math.min(4.5, al)) : this.state.alto }, this.save);
+          this.setState({ rooms, stairs, nPl: Math.max(1, ...rooms.map(r => (r.planta || 0) + 1)), planta: 0, suelo: raw.suelo || 'auto', colorPared: raw.colorPared || '', nombre: String(raw.nombre || f.name.replace(/\.json$/i, '')).slice(0, 60), sel: null, selS: null, alto: Number.isFinite(al) ? Math.max(2.2, Math.min(4.5, al)) : this.state.alto }, this.save);
         }
         this.setUp({ kind: 'json', name: f.name, errors: r.errors, warnings: r.warnings, stats: r.stats });
       });
@@ -430,16 +529,17 @@ class Component extends DCLogic {
     document.documentElement.style.overflow = 'hidden';
     this._last = '';
     this.stopPlay();
-    this.setState({ v: { name, phase: 'build', pct: 0, step: -1, label: 'Cargando el motor 3D', mode: 'orbit', tour: false, rooms: [], room: null, err: '', hour: 10.5, lights: 'auto', H: (input && input.H) || 2.7, doors: { total: 0, open: 0 }, facade: 'revoque', playing: false } }, async () => {
+    this.setState({ v: { name, phase: 'build', pct: 0, step: -1, label: 'Cargando el motor 3D', mode: 'orbit', tour: false, rooms: [], room: null, err: '', hour: 10.5, lights: 'auto', H: (input && input.H) || 2.7, doors: { total: 0, open: 0 }, facade: 'revoque', playing: false, furn: true, level: 'all', plantas: (input && input.plantas) || 1, wall: (input && input.colorPared) || '', floor: (input && input.suelo) || 'auto' } }, async () => {
       const upd = o => this.setState(s => s.v ? { v: Object.assign({}, s.v, o) } : null);
       try {
-        const E = await import(new URL('aq-render3d.js', document.baseURI).href);
+        const E = await import(new URL('aq-render3d.js?v=20261105c', document.baseURI).href);
         const el = this.stageRef.current; if (!el || !this.state.v) return;
         const api = await E.createViewer(el, input, {
           minimap: () => this.props.minimapa === false ? null : this.mmRef.current,
           onProgress: p => { const k = p.step + '|' + p.pct + '|' + p.label; if (k !== this._last) { this._last = k; upd(p); } },
-          onReady: info => upd({ phase: 'ready', pct: 100, rooms: info.rooms, H: info.H || 2.7, doors: { total: info.doors || 0, open: 0 } }),
-          onMode: m => upd({ mode: m }), onTour: t => upd({ tour: t }), onRoom: r => upd({ room: r }), onDoors: d => upd({ doors: d }), hour: 10.5
+          onReveal: () => upd({ phase: 'anim', pct: 100 }),
+          onReady: info => upd({ phase: 'ready', pct: 100, rooms: info.rooms, H: info.H || 2.7, plantas: info.plantas || 1, doors: { total: info.doors || 0, open: 0 } }),
+          onLevel: l => upd({ level: l }), onMode: m => upd({ mode: m }), onTour: t => upd({ tour: t }), onRoom: r => upd({ room: r }), onDoors: d => upd({ doors: d }), hour: 10.5
         });
         if (!this.state.v) { api.dispose(); return; }
         this.api = api;
@@ -448,13 +548,13 @@ class Component extends DCLogic {
   }
   closeViewer = () => { this.stopPlay(); if (this.api) { this.api.dispose(); this.api = null; } document.documentElement.style.overflow = ''; this.setState({ v: null }); };
   renderPlan = () => {
-    if (!this.P) return; const r = this.P.normalize(this.P.toFile(this.state.nombre, this.state.rooms, this.state.alto));
+    if (!this.P) return; const r = this.P.normalize(this.fileOf());
     if (!r.plan) { history.replaceState(null, '', '#crear'); this.setState({ tab: 'crear' }); return; }
     this.openViewer(r.plan, r.plan.nombre);
   };
-  renderDemo = () => { if (!this.P) return; const t = this.P.PLANTILLAS[0], r = this.P.normalize(this.P.toFile(t.nombre, t.estancias)); this.openViewer(r.plan, t.nombre); };
-  renderTpl = e => { const t = this.P && this.P.PLANTILLAS.find(t => t.id === e.currentTarget.getAttribute('data-id')); if (!t) return; const r = this.P.normalize(this.P.toFile(t.nombre, t.estancias)); this.openViewer(r.plan, t.nombre); };
-  editTpl = e => { const t = this.P && this.P.PLANTILLAS.find(t => t.id === e.currentTarget.getAttribute('data-id')); if (!t) return; history.replaceState(null, '', '#crear'); this.setState({ tab: 'crear', sel: null, nombre: t.nombre, rooms: t.estancias.map(x => Object.assign({}, x)) }, this.save); };
+  renderDemo = () => { if (!this.P) return; const t = this.P.PLANTILLAS[0], r = this.P.normalize(this.P.toFile(t.nombre, t.estancias, 2.7, t.escaleras)); this.openViewer(r.plan, t.nombre); };
+  renderTpl = e => { const t = this.P && this.P.PLANTILLAS.find(t => t.id === e.currentTarget.getAttribute('data-id')); if (!t) return; const r = this.P.normalize(this.P.toFile(t.nombre, t.estancias, 2.7, t.escaleras)); this.openViewer(r.plan, t.nombre); };
+  editTpl = e => { const t = this.P && this.P.PLANTILLAS.find(t => t.id === e.currentTarget.getAttribute('data-id')); if (!t) return; history.replaceState(null, '', '#crear'); const rooms = t.estancias.map(x => Object.assign({}, x)); this.setState({ tab: 'crear', sel: null, selS: null, planta: 0, nombre: t.nombre, rooms, stairs: (t.escaleras || []).map(x => Object.assign({}, x)), nPl: Math.max(1, ...rooms.map(r => (r.planta || 0) + 1)) }, this.save); };
   renderGlb = () => { if (this.glbUrl) this.openViewer({ glb: this.glbUrl }, (this.state.up && this.state.up.name) || 'Modelo 3D'); };
   setMode = e => { if (this.api) this.api.setMode(e.currentTarget.getAttribute('data-k')); };
   toggleTour = () => { if (!this.api) return; if (this.state.v && this.state.v.tour) this.api.stopTour(); else this.api.startTour(); };
@@ -468,6 +568,11 @@ class Component extends DCLogic {
   onHeight = e => { const h = parseFloat(e.target.value); if (!Number.isFinite(h)) return; if (this.api && this.api.setHeight) this.api.setHeight(h); this.updV({ H: h }); };
   setLights = e => { const k = e.currentTarget.getAttribute('data-k'); if (this.api) this.api.setLights(k); this.updV({ lights: k }); };
   setFacade = e => { const k = e.currentTarget.getAttribute('data-k'); if (this.api) this.api.setFacade(k); this.updV({ facade: k }); };
+  setFurn = e => { const on = e.currentTarget.getAttribute('data-k') === 'on'; if (this.api) this.api.setFurniture(on); this.updV({ furn: on }); };
+  setLevel = e => { const k = e.currentTarget.getAttribute('data-k'); if (this.api) { this.api.setLevel(k === 'all' ? 'all' : +k); if (this.api.mode !== 'orbit') this.api.setMode('orbit'); } this.updV({ level: k === 'all' ? 'all' : +k }); };
+  setWall = e => { const c = e.currentTarget.getAttribute('data-c'); if (this.api) this.api.setWallColor(c); this.updV({ wall: c }); };
+  onWallPick = e => { const c = String(e.target.value).toLowerCase(); if (this.api) this.api.setWallColor(c); this.updV({ wall: c }); };
+  onFloor = e => { const k = e.target.value; if (this.api) this.api.setFloor(k); this.updV({ floor: k }); };
   toggleDoors = () => { if (!this.api) return; const d = this.api.doors, open = !(d.open > d.total / 2); this.api.setDoors(open); };
   stopPlay = () => { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; };
   togglePlay = () => {
@@ -482,33 +587,48 @@ class Component extends DCLogic {
     const s = this.state, P = this.P, v = s.v, fmt = this.fmt, T = P ? P.TIPOS : {};
     const pill = on => ({ on: on ? 'true' : 'false', bg: on ? 'var(--color-text)' : 'transparent', fg: on ? 'var(--color-bg)' : 'var(--color-text)' });
     const tabs = [['subir', 'Subir plano'], ['crear', 'Crear plano'], ['plantillas', 'Plantillas'], ['estandares', 'Estándares']].map(([k, l]) => Object.assign({ k, l }, pill(s.tab === k)));
-    const tools = [['draw', 'Dibujar'], ['move', 'Mover'], ['erase', 'Borrar']].map(([k, l]) => Object.assign({ k, l }, pill(s.tool === k)));
+    const tools = [['draw', 'Dibujar'], ['stair', 'Escalera'], ['move', 'Mover'], ['erase', 'Borrar']].map(([k, l]) => Object.assign({ k, l }, pill(s.tool === k)));
     const typeChips = Object.keys(T).map(k => ({ k, l: T[k].l, sw: T[k].css, on: s.newType === k ? 'true' : 'false', bd: s.newType === k ? 'var(--color-text)' : 'var(--color-divider)', bg: s.newType === k ? 'var(--color-neutral-200)' : 'var(--color-bg)' }));
     let val = null, an = null;
-    if (P) { val = P.normalize(P.toFile(s.nombre, s.rooms, s.alto)); if (val.plan) { try { an = P.analyze(val.plan); } catch (e) { an = null; } } }
-    const maxX = Math.max(0, ...s.rooms.map(r => r.x + r.ancho)), maxY = Math.max(0, ...s.rooms.map(r => r.y + r.fondo));
+    let anAll = null;
+    if (P) { val = P.normalize(this.fileOf()); if (val.plan) { try { anAll = P.analyzeAll(val.plan); an = anAll[s.planta] || null; } catch (e) { an = null; anAll = null; } } }
+    const maxX = Math.max(0, ...s.rooms.map(r => r.x + r.ancho), ...s.stairs.map(q => q.x + q.ancho)), maxY = Math.max(0, ...s.rooms.map(r => r.y + r.fondo), ...s.stairs.map(q => q.y + q.fondo));
+    const pl = s.planta, onPl = r => (r.planta || 0) === pl, nPl = Math.max(s.nPl, ...s.rooms.map(r => (r.planta || 0) + 1));
+    const plName = k => k === 0 ? 'Planta baja' : 'Planta ' + k;
+    const plOpts = Array.from({ length: nPl }, (_, k) => Object.assign({ k: String(k), l: plName(k) + ' (' + s.rooms.filter(r => (r.planta || 0) === k).length + ')' }, pill(pl === k)));
+    const arrow = { N: '↑', S: '↓', E: '→', O: '←' };
+    const edStairs = s.stairs.filter(q => (q.planta || 0) === pl || (q.planta || 0) === pl - 1).map(q => {
+      const own = (q.planta || 0) === pl, sel = q.id === s.selS, alongX = q.sube === 'E' || q.sube === 'O', L = alongX ? q.ancho : q.fondo, n = Math.max(3, Math.round(L / 0.27)); let steps = '';
+      if (own) for (let i = 1; i < n; i++) { const t = i / n; steps += alongX ? `M${q.x + q.ancho * t} ${q.y}V${q.y + q.fondo}` : `M${q.x} ${q.y + q.fondo * t}H${q.x + q.ancho}`; }
+      const fs = Math.max(0.22, Math.min(0.38, Math.min(q.ancho, q.fondo) * 0.32));
+      return { sid: q.id, x: q.x, y: q.y, w: q.ancho, d: q.fondo, fill: own ? '#b08a62' : 'var(--color-neutral-100)', op: own ? '0.55' : '0.9', stroke: sel ? 'var(--color-accent)' : 'var(--color-neutral-800)', dash: own ? (sel ? '0.2 0.12' : '0') : '0.15 0.1', pe: own ? 'auto' : 'none', steps, lx: q.x + q.ancho / 2, ly: q.y + q.fondo / 2 + fs * 0.35, fs, label: own ? 'Sube ' + (arrow[q.sube] || '') : 'Hueco ' + (arrow[q.sube] || '') };
+    });
+    const edGhost = pl > 0 ? s.rooms.filter(r => (r.planta || 0) === pl - 1).map(r => ({ x: r.x, y: r.y, w: r.ancho, d: r.fondo })) : [];
     const uW = s.under ? s.underW : 0, uH = s.under ? s.underW * s.under.ar : 0;
     const W = Math.max(20, maxX + 3, uW + 1), H = Math.max(13, maxY + 3, uH + 1);
-    const edRooms = s.rooms.map(r => { const fs = Math.max(0.24, Math.min(0.42, Math.min(r.ancho, r.fondo) * 0.15)), sel = r.id === s.sel; return { id: r.id, x: r.x, y: r.y, w: r.ancho, d: r.fondo, fill: (T[r.tipo] || {}).css || 'var(--color-neutral-200)', stroke: sel ? 'var(--color-accent)' : 'var(--color-neutral-400)', dash: sel ? '0.2 0.12' : '0', lx: r.x + r.ancho / 2, ly: r.y + r.fondo / 2 - fs * 0.15, l2: r.y + r.fondo / 2 + fs * 1.05, fs, fs2: fs * 0.8, name: r.nombre + (r.dobleAltura ? ' ↑' : ''), dims: fmt(r.ancho) + ' × ' + fmt(r.fondo) + ' m' }; });
+    const edRooms = s.rooms.filter(onPl).map(r => { const fs = Math.max(0.24, Math.min(0.42, Math.min(r.ancho, r.fondo) * 0.15)), sel = r.id === s.sel; return { id: r.id, x: r.x, y: r.y, w: r.ancho, d: r.fondo, fill: (T[r.tipo] || {}).css || 'var(--color-neutral-200)', stroke: sel ? 'var(--color-accent)' : 'var(--color-neutral-400)', dash: sel ? '0.2 0.12' : '0', lx: r.x + r.ancho / 2, ly: r.y + r.fondo / 2 - fs * 0.15, l2: r.y + r.fondo / 2 + fs * 1.05, fs, fs2: fs * 0.8, name: r.nombre + (r.dobleAltura ? ' ↑' : ''), dims: fmt(r.ancho) + ' × ' + fmt(r.fondo) + ' m' }; });
     const L = (o, c, a, b, w, col) => o === 'h' ? { x1: a, y1: c, x2: b, y2: c, w, c: col } : { x1: c, y1: a, x2: c, y2: b, w, c: col };
     const edSegs = an ? an.segs.map(g => L(g.o, g.c, g.a, g.b, g.t)) : [];
-    const edOps = an ? an.ops.map(o => o.kind === 'window' ? L(o.seg.o, o.seg.c, o.s, o.e, o.seg.t * 0.45, 'var(--color-accent-2-300)') : L(o.seg.o, o.seg.c, o.s, o.e, o.seg.t + 0.04, o.kind === 'entry' ? 'var(--color-accent)' : 'var(--color-neutral-100)')) : [];
-    const selRaw = s.rooms.find(r => r.id === s.sel), selR = selRaw ? { nombre: selRaw.nombre, tipo: selRaw.tipo, ancho: selRaw.ancho, fondo: selRaw.fondo, x: selRaw.x, y: selRaw.y, dbl: !!selRaw.dobleAltura, altura: selRaw.altura || '' } : {};
+    const edOps = an ? an.ops.map(o => o.kind === 'window' ? L(o.seg.o, o.seg.c, o.s, o.e, o.seg.t * 0.45, 'var(--color-accent-2-300)') : L(o.seg.o, o.seg.c, o.s, o.e, o.seg.t + 0.04, o.kind === 'entry' || o.kind === 'garage' ? 'var(--color-accent)' : 'var(--color-neutral-100)')) : [];
+    const COL = P ? P.COLORES : [], swatch = (k, l, on) => ({ k, l, on: on ? 'true' : 'false', bd: on ? 'var(--color-accent)' : 'var(--color-neutral-300)' });
+    const selRaw = s.rooms.find(r => r.id === s.sel && onPl(r)), selR = selRaw ? { nombre: selRaw.nombre, tipo: selRaw.tipo, ancho: selRaw.ancho, fondo: selRaw.fondo, x: selRaw.x, y: selRaw.y, dbl: !!selRaw.dobleAltura, altura: selRaw.altura || '', suelo: selRaw.suelo || 'auto', colors: COL.map(([k, l]) => swatch(k, l, selRaw.colorPared === k)), cDef: selRaw.colorPared ? 'false' : 'true', cDefBd: selRaw.colorPared ? 'var(--color-neutral-300)' : 'var(--color-accent)', cPick: selRaw.colorPared || s.colorPared || '#ebe7e0' } : {};
+    const selSRaw = s.stairs.find(q => q.id === s.selS && (q.planta || 0) === pl);
+    const fh = Math.round((s.alto + 0.25) * 100) / 100, selS = selSRaw ? (() => { const L = selSRaw.sube === 'E' || selSRaw.sube === 'O' ? selSRaw.ancho : selSRaw.fondo, n = Math.max(3, Math.round(fh / 0.175)), tr = L / n; return { sube: selSRaw.sube, ancho: selSRaw.ancho, fondo: selSRaw.fondo, x: selSRaw.x, y: selSRaw.y, info: n + ' peldaños de ' + fmt(Math.round(fh / n * 1000) / 10) + ' cm de altura y ' + fmt(Math.round(tr * 1000) / 10) + ' cm de huella' + (tr < 0.24 ? '. Es empinada: alárgala hacia donde sube (lo cómodo son 25–30 cm de huella).' : '.') }; })() : {};
     const d = s.draft;
     const row = (t, m) => ({ m, i: t === 'ok' ? '✓' : t === 'warn' ? '!' : '✕', bg: t === 'ok' ? 'var(--color-accent-2-500)' : t === 'warn' ? 'var(--color-accent-200)' : 'var(--color-accent-700)', fg: t === 'warn' ? 'var(--color-accent-900)' : 'var(--color-bg)' });
-    const valRows = !val ? [] : [].concat(val.errors.map(m => row('err', m)), val.warnings.filter(m => !/formato/.test(m)).map(m => row('warn', m)), an ? an.warnings.map(m => row('warn', m)) : [], !val.errors.length && s.rooms.length ? [row('ok', 'Listo para renderizar')] : []);
+    const valRows = !val ? [] : [].concat(val.errors.map(m => row('err', m)), val.warnings.filter(m => !/formato/.test(m)).map(m => row('warn', m)), anAll ? anAll.flatMap(a => a.warnings).map(m => row('warn', m)) : [], !val.errors.length && s.rooms.length ? [row('ok', 'Listo para renderizar')] : []);
     const up = s.up; let upRows = [];
     if (up) {
       upRows = up.errors.map(m => row('err', m)).concat(up.warnings.map(m => row('warn', m)));
       if (!up.errors.length) {
-        if (up.kind === 'json' && up.stats) upRows = [row('ok', 'Formato aq-plano v1 válido'), row('ok', up.stats.n + ' estancias · ' + fmt(up.stats.area) + ' m² útiles' + (up.stats.terraza ? ' + ' + fmt(up.stats.terraza) + ' m² de terraza' : '')), row('ok', up.stats.dbl ? 'Incluye doble altura' : 'Altura estándar en todas las estancias')].concat(upRows);
+        if (up.kind === 'json' && up.stats) upRows = [row('ok', 'Formato aq-plano v1 válido'), row('ok', up.stats.n + ' estancias · ' + fmt(up.stats.area) + ' m² útiles' + (up.stats.terraza ? ' + ' + fmt(up.stats.terraza) + ' m² de terraza' : '')), row('ok', up.stats.dbl ? 'Incluye doble altura' : 'Altura estándar en todas las estancias')].concat(up.stats.plantas > 1 ? [row('ok', up.stats.plantas + ' plantas · ' + up.stats.escaleras + (up.stats.escaleras === 1 ? ' escalera' : ' escaleras'))] : [], up.stats.garajes ? [row('ok', up.stats.garajes + (up.stats.garajes === 1 ? ' garaje' : ' garajes'))] : [], upRows);
         if (up.kind === 'img') upRows = [row('ok', 'Imagen cargada · ' + up.px), row('ok', 'Indica su ancho real y dibuja encima en «Crear plano»')].concat(upRows);
         if (up.kind === 'glb') upRows = [row('ok', 'Modelo 3D listo · ' + up.size)];
       }
     }
     const tpls = P ? P.PLANTILLAS.map(t => { const r = P.normalize(P.toFile(t.nombre, t.estancias)), rs = r.plan ? r.plan.rooms : []; const bx = Math.max(...rs.map(q => q.x + q.w)), by = Math.max(...rs.map(q => q.y + q.d)), side = Math.max(bx / 4, by / 3) + 0.6; return { id: t.id, nombre: t.nombre, sub: t.sub, stats: fmt(r.stats.area) + ' m² útiles · ' + r.stats.n + ' estancias', vb: `${(bx - side * 4) / 2} ${(by - side * 3) / 2} ${side * 4} ${side * 3}`, rects: rs.map(q => ({ x: q.x, y: q.y, w: q.w, d: q.d, fill: T[q.tipo].css })) }; }) : [];
     const mode = v ? v.mode : 'orbit', cz = this.coarse;
-    const hint = mode === 'orbit' ? (cz ? 'Arrastra para girar · pellizca para acercar · toca una puerta para abrirla o cerrarla' : 'Arrastra para girar · rueda para acercar · haz clic en una puerta para abrirla o cerrarla') : mode === 'walk' ? (cz ? 'Joystick a la izquierda para andar · arrastra a la derecha para mirar · toca una puerta para abrirla' : 'WASD o flechas para andar · arrastra para mirar · Mayús para correr · F o clic abre y cierra puertas') : (cz ? 'Joystick para volar · ▲▼ para subir y bajar' : 'WASD para volar · E / Q subir y bajar · arrastra para mirar · F abre puertas');
+    const hint = mode === 'orbit' ? (cz ? 'Arrastra para girar · pellizca para acercar · toca una puerta para abrirla o cerrarla' : 'Arrastra para girar · rueda para acercar · haz clic en una puerta para abrirla o cerrarla') : mode === 'walk' ? (cz ? 'Joystick a la izquierda para andar · atraviesas los muebles, no los muros · toca una puerta para abrirla' : 'WASD o flechas para andar · atraviesas los muebles, no los muros · Mayús para correr · F o clic abre y cierra puertas y portones') : (cz ? 'Joystick para volar · ▲▼ para subir y bajar' : 'WASD para volar · E / Q subir y bajar · arrastra para mirar · F abre puertas');
     const step = v ? v.step : -1;
     const hh = v ? v.hour : 10.5, hm = Math.round(hh * 60) % 1440, vHourL = String(Math.floor(hm / 60)).padStart(2, '0') + ':' + String(hm % 60).padStart(2, '0');
     const dark = on => ({ on: on ? 'true' : 'false', bg: on ? 'var(--color-neutral-100)' : 'transparent', fg: on ? 'var(--color-neutral-900)' : '#f6f0e7' });
@@ -519,27 +639,37 @@ class Component extends DCLogic {
       onFile: this.onFile, onDrop: this.onDrop, onDragOver: this.onDragOver, onDragLeave: this.onDragLeave, dropBd: s.drop ? 'var(--color-accent)' : 'var(--color-neutral-400)', dropBg: s.drop ? 'var(--color-accent-100)' : 'var(--color-neutral-100)',
       noUp: !up, hasUp: !!up, upKind: up ? ({ json: 'Plano Aquaterra', img: 'Imagen para calcar', glb: 'Modelo 3D', x: 'Archivo' })[up.kind] : '', upName: up ? up.name : '', upRows,
       upImg: !!(up && up.kind === 'img' && !up.errors.length), upGlb: !!(up && up.kind === 'glb' && !up.errors.length), upCanRender: !!(up && up.kind === 'json' && !up.errors.length), upToEditor: !!(up && (up.kind === 'json' || (up.kind === 'img' && !up.errors.length))), upEditLabel: up && up.kind === 'img' ? 'Calcar en Crear plano' : 'Editar en Crear plano',
-      tools, setTool: this.setTool, isDraw: s.tool === 'draw', typeChips, setNewType: this.setNewType, nombre: s.nombre, onNombre: this.onNombre, clearPlan: this.clearPlan, downloadPlan: this.downloadPlan, downloadTemplate: this.downloadTemplate,
+      tools, setTool: this.setTool, isDraw: s.tool === 'draw', isStairTool: s.tool === 'stair',
+      plOpts, setPlanta: this.setPlanta, canAddPl: nPl < 4, addPlanta: this.addPlanta, canDelPl: pl > 0 && pl === nPl - 1, delPlanta: this.delPlanta,
+      plHint: pl > 0 ? 'Las estancias de la planta de abajo se ven punteadas.' : (nPl > 1 ? 'Dibuja aquí la escalera que sube a la planta 1.' : ''),
+      edGhost, edStairs, hasSelS: !!selSRaw, selS, onStairField: this.onStairField, delSelS: this.delSelS,
+      sueloOpts: P ? Object.keys(P.SUELOS).map(k => ({ k, l: P.SUELOS[k].l })) : [], gSuelo: s.suelo || 'auto', onGSuelo: this.onGSuelo,
+      gColors: COL.map(([k, l]) => swatch(k, l, (s.colorPared || '#ebe7e0') === k)), setGColor: this.setGColor, gPick: s.colorPared || '#ebe7e0', onGColorPick: this.onGColorPick,
+      setRoomColor: this.setRoomColor, onRoomColorPick: this.onRoomColorPick, typeChips, setNewType: this.setNewType, nombre: s.nombre, onNombre: this.onNombre, clearPlan: this.clearPlan, downloadPlan: this.downloadPlan, downloadTemplate: this.downloadTemplate,
       svgRef: this.svgRef, vb: `-1 -1 ${W + 1} ${H + 1}`, edDown: this.edDown, edMove: this.edMove, edUp: this.edUp, cursor: s.tool === 'draw' ? 'crosshair' : s.tool === 'erase' ? 'not-allowed' : 'grab',
       edRooms, edSegs, edOps, hasDraft: !!(d && d.w > 0 && d.d > 0), draft: d ? { x: d.x, y: d.y, w: d.w, d: d.d, lx: d.x + d.w / 2, ly: d.y + d.d / 2 + 0.14, dims: fmt(d.w) + ' × ' + fmt(d.d) + ' m' } : {},
-      hasHandle: !!selRaw && s.tool !== 'erase', handle: selRaw ? { x: selRaw.x + selRaw.ancho, y: selRaw.y + selRaw.fondo } : {},
+      hasHandle: (!!selRaw || !!selSRaw) && s.tool !== 'erase', handle: selSRaw ? { x: selSRaw.x + selSRaw.ancho, y: selSRaw.y + selSRaw.fondo } : selRaw ? { x: selRaw.x + selRaw.ancho, y: selRaw.y + selRaw.fondo } : {},
       hasUnder: !!s.under, underRef: this.underRef, underW: s.underW, underH: uH, onUnderW: this.onUnderW, dropUnder: this.dropUnder,
-      hasSel: !!selRaw, noSel: !selRaw, selR, onField: this.onField, delSel: this.delSel,
-      sumArea: val && val.stats ? fmt(val.stats.area) + ' m²' : '—', sumN: String(s.rooms.length), sumDoors: an ? String(an.ops.filter(o => o.kind === 'door' || o.kind === 'entry' || o.kind === 'slide').length) : '—', sumWins: an ? String(an.ops.filter(o => o.kind === 'window').length) : '—', valRows,
+      hasSel: !!selRaw, noSel: !selRaw && !selSRaw, selR, onField: this.onField, delSel: this.delSel,
+      sumArea: val && val.stats ? fmt(val.stats.area) + ' m²' : '—', sumN: String(s.rooms.length), sumDoors: anAll ? String(anAll.reduce((n, a) => n + a.ops.filter(o => o.kind === 'door' || o.kind === 'entry' || o.kind === 'slide' || o.kind === 'garage').length, 0)) : '—', sumWins: anAll ? String(anAll.reduce((n, a) => n + a.ops.filter(o => o.kind === 'window').length, 0)) : '—', valRows,
       tpls,
       vOpen: !!v, vName: v ? v.name : '', vBuild: !!(v && v.phase === 'build'), vReady: !!(v && v.phase === 'ready'), vErr: !!(v && v.phase === 'error'), vErrMsg: v ? 'El navegador no pudo iniciar el 3D (' + v.err + '). Prueba en Chrome, Safari o Edge actualizados.' : '',
       vLabel: v ? v.label : '', vPct: (v ? v.pct : 0) + '%', stageRef: this.stageRef, mmRef: this.mmRef, closeViewer: this.closeViewer,
       steps: this.STEPS.map((l, i) => ({ l, i: i < step ? '✓' : String(i + 1), bg: i < step ? 'var(--color-accent-2-500)' : i === step ? 'var(--color-accent)' : 'var(--color-neutral-400)', fg: i <= step ? 'var(--color-text)' : 'var(--color-neutral-600)' })),
       modes: [['orbit', 'Maqueta'], ['walk', 'A pie'], ['fly', 'Volar']].map(([k, l]) => Object.assign({ k, l }, pill(mode === k))), setMode: this.setMode,
       hasRooms: !!(v && v.rooms.length), tourLabel: v && v.tour ? 'Detener tour' : 'Iniciar tour', toggleTour: this.toggleTour, photo: this.photo,
-      roomChips: v ? v.rooms.map(r => { const on = !!(v.room && v.room.id === r.id); return { id: r.id, l: r.nombre, on: on ? 'true' : 'false', bg: on ? 'var(--color-accent)' : 'var(--color-neutral-100)', fg: on ? 'var(--color-bg)' : 'var(--color-neutral-900)' }; }) : [], goRoom: this.goRoom,
+      roomChips: v ? v.rooms.map(r => { const on = !!(v.room && v.room.id === r.id); return { id: r.id, l: (v.plantas > 1 ? (r.planta ? 'P' + r.planta + ' · ' : 'PB · ') : '') + r.nombre, on: on ? 'true' : 'false', bg: on ? 'var(--color-accent)' : 'var(--color-neutral-100)', fg: on ? 'var(--color-bg)' : 'var(--color-neutral-900)' }; }) : [], goRoom: this.goRoom,
       hasCaption: !!(v && v.room && mode !== 'orbit'), caption: v && v.room ? v.room.nombre + ' · ' + fmt(v.room.area) + ' m²' + (v.room.dbl ? ' · doble altura' : '') : '',
       panelOpen, panelOn: s.panel ? 'true' : 'false', panelBg: s.panel ? 'var(--color-accent)' : 'var(--color-neutral-100)', panelFg: s.panel ? 'var(--color-bg)' : 'var(--color-neutral-900)', togglePanel: this.togglePanel,
-      roomsBottom: panelOpen ? 'calc(' + (v && v.rooms.length ? 230 : 190) + 'px + env(safe-area-inset-bottom))' : 'calc(64px + env(safe-area-inset-bottom))',
+      roomsBottom: panelOpen ? 'calc(' + (v && v.rooms.length ? 340 : 190) + 'px + env(safe-area-inset-bottom))' : 'calc(64px + env(safe-area-inset-bottom))',
       vHour: hh, vHourL, onHour: this.onHour, togglePlay: this.togglePlay, playIcon: v && v.playing ? '❚❚' : '▶', playAria: v && v.playing ? 'Pausar el paso del día' : 'Reproducir el paso del día',
       vH: v ? v.H : 2.7, vHL: fmt(v ? v.H : 2.7) + ' m', onHeight: this.onHeight,
       lightOpts: [['auto', 'Auto'], ['on', 'Encendidas'], ['off', 'Apagadas']].map(([k, l]) => Object.assign({ k, l }, dark(v && v.lights === k))), setLights: this.setLights,
       facadeOpts: [['revoque', 'Revoque'], ['ladrillo', 'Ladrillo'], ['piedra', 'Piedra']].map(([k, l]) => Object.assign({ k, l }, dark(v && v.facade === k))), setFacade: this.setFacade,
+      furnOpts: [['on', 'Ver'], ['off', 'Ocultar']].map(([k, l]) => Object.assign({ k, l }, dark(v && (k === 'on') === v.furn))), setFurn: this.setFurn,
+      multiLevel: !!(v && v.plantas > 1), levelOpts: v ? [['all', 'Todas']].concat(Array.from({ length: v.plantas - 1 }, (_, k) => [String(k), k === 0 ? 'Baja' : 'Hasta ' + k])).map(([k, l]) => Object.assign({ k, l }, dark(String(v.level) === k))) : [], setLevel: this.setLevel,
+      wallOpts: P ? P.COLORES.map(([k, l]) => ({ k, l, on: v && (v.wall || '#ebe7e0') === k ? 'true' : 'false', bd: v && (v.wall || '#ebe7e0') === k ? '#fff' : 'rgba(255,255,255,.25)' })) : [], setWall: this.setWall, wallPick: (v && v.wall) || '#ebe7e0', onWallPick: this.onWallPick,
+      vFloor: (v && v.floor) || 'auto', floorOpts: P ? Object.keys(P.SUELOS).map(k => ({ k, l: P.SUELOS[k].l })) : [], onFloor: this.onFloor,
       hasDoors: doorsTot > 0, doorsLabel: v && v.doors && v.doors.open > v.doors.total / 2 ? 'Cerrar todas las puertas' : 'Abrir todas las puertas', toggleDoors: this.toggleDoors,
       alto: s.alto, onAlto: this.onAlto, altoPh: 'General: ' + fmt(s.alto), dblL: fmt(s.alto * 2) + ' m',
       hint, showMM: this.props.minimapa !== false, flyBtns: !!(v && v.phase === 'ready' && mode === 'fly' && cz), liftOn: this.liftOn, liftOff: this.liftOff
